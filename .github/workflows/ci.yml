@@ -17,10 +17,16 @@ jobs:
       # como sibling es lo que lo hace resoluble en CI. Cuando el paquete se
       # publique a un registro real (GitHub Packages / npm privado), borrar
       # este step y volver a `pnpm add @jobsradar/contracts@<version>`.
+      #
+      # jobsradar-api es privado: el GITHUB_TOKEN por defecto de este workflow
+      # NO tiene acceso a otro repo. Hace falta un Personal Access Token con
+      # permiso de lectura sobre jobsradar-api, guardado como secret
+      # JOBSRADAR_API_RO_TOKEN en este repo (Settings → Secrets → Actions).
       - uses: actions/checkout@v4
         with:
-          repository: <ORG>/jobsradar-api # TODO: reemplazar cuando exista el remoto
+          repository: diegosancheznearcode/jobsradar-api
           path: jobsradar-api-sibling
+          token: ${{ secrets.JOBSRADAR_API_RO_TOKEN }}
 
       - name: Symlink sibling repo a la ruta que espera el file: dependency
         run: |
