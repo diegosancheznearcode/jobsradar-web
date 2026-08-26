@@ -1,8 +1,13 @@
 // Tipos de UI derivados de @jobsradar/contracts, sin dependencias de React.
-// Ver ARCHITECTURE.md sección 9. Contenido real pendiente: Fase 7, una vez
-// @jobsradar/contracts tenga los esquemas reales (Fase 2).
+// Ver ARCHITECTURE.md sección 9. Los esquemas reales viven en
+// @jobsradar/contracts (Fase 2, jobsradar-api) — acá solo se re-exportan los
+// tipos que la UI necesita, para que ui/ y application/ nunca importen
+// directamente del paquete del backend.
 
-import type { z } from "zod";
-import { PlaceholderSchema } from "@jobsradar/contracts";
-
-export type Placeholder = z.infer<typeof PlaceholderSchema>;
+export type {
+  SearchCriteria,
+  Company,
+  Founder,
+  JobPosting,
+  SearchEvent,
+} from "@jobsradar/contracts";
