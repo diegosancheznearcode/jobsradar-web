@@ -28,7 +28,7 @@ jobs:
           path: jobsradar-api-sibling
           token: ${{ secrets.JOBSRADAR_API_RO_TOKEN }}
 
-      - name: Symlink sibling repo a la ruta que espera el file: dependency
+      - name: "Symlink sibling repo a la ruta que espera el file: dependency"
         run: |
           cd ..
           ln -s "$GITHUB_WORKSPACE/jobsradar-api-sibling" jobsradar-api
