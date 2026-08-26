@@ -1,12 +1,86 @@
-import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Company, SearchCriteria, SearchEvent } from "../domain";
 import type { SearchPort } from "./ports";
 
-// Ejemplo mínimo de cómo `ui/` debe consumir `application/`: nunca importa
-// HttpSearchAdapter directamente, recibe el puerto por parámetro (inyección
-// simple). El caso de uso real (progreso, cancelación, export) llega en la
-// Fase 7 — ver ARCHITECTURE.md sección 9.1.
+// Caso de uso real de Fase 7 — reemplaza el placeholder de useMutation de
+// Fase 1. `ui/` nunca ve SearchPort.subscribe ni los SearchEvent crudos,
+// solo este estado ya acumulado. Ver ARCHITECTURE.md sección 7.1 para la
+// unión completa de SearchEvent.
+
+export type SearchStatus = "idle" | "starting" | "running" | "paused" | "done" | "error";
+
+export interface SearchProgress {
+  found: number;
+  target: number;
+  page: number;
+}
+
+export interface FailedCompany {
+  slug: string;
+  reason: string;
+}
+
+export interface SearchState {
+  searchId: string | null;
+  status: SearchStatus;
+  progress: SearchProgress | null;
+  companies: Company[];
+  failed: FailedCompany[];
+  errorMessage: string | null;
+}
+
+const initialState: SearchState = {
+  searchId: null,
+  status: "idle",
+  progress: null,
+  companies: [],
+  failed: [],
+  errorMessage: null,
+};
+
+// Función pura, exportada aparte para poder testear cada transición de
+// SearchEvent sin levantar el hook completo.
+export function applySearchEvent(state: SearchState, event: SearchEvent): SearchState {
+  switch (event.type) {
+    case "progress":
+      return { ...state, progress: { found: event.found, target: event.target, page: event.page } };
+    case "company.found":
+      return { ...state, companies: [...state.companies, event.company] };
+    case "company.failed":
+      return { ...state, failed: [...state.failed, { slug: event.slug, reason: event.reason }] };
+    case "paused":
+      return { ...state, status: "paused" };
+    case "done":
+      return { ...state, status: "done" };
+    case "error":
+      return { ...state, status: "error", errorMessage: event.message };
+    default:
+      return state;
+  }
+}
+
 export function useSearch(searchPort: SearchPort) {
-  return useMutation({
-    mutationFn: (criteria: unknown) => searchPort.start(criteria),
-  });
+  const [state, setState] = useState<SearchState>(initialState);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => unsubscribeRef.current?.();
+  }, []);
+
+  const start = useCallback(
+    async (criteria: SearchCriteria) => {
+      unsubscribeRef.current?.();
+      setState({ ...initialState, status: "starting" });
+
+      const { searchId } = await searchPort.start(criteria);
+      setState((prev) => ({ ...prev, searchId, status: "running" }));
+
+      unsubscribeRef.current = searchPort.subscribe(searchId, (event) => {
+        setState((prev) => applySearchEvent(prev, event));
+      });
+    },
+    [searchPort],
+  );
+
+  return { state, start };
 }

@@ -1,2 +1,3 @@
 export type { SearchPort, ExportPort } from "./ports";
-export { useSearch } from "./useSearch";
+export { useSearch, applySearchEvent } from "./useSearch";
+export type { SearchState, SearchStatus, SearchProgress, FailedCompany } from "./useSearch";

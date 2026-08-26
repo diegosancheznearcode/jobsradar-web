@@ -1,4 +1,5 @@
 import type { SearchPort } from "../application/ports";
+import type { SearchCriteria, SearchEvent } from "../domain";
 import { API_BASE_URL } from "./config";
 import { SseAdapter } from "./SseAdapter";
 
@@ -8,7 +9,7 @@ import { SseAdapter } from "./SseAdapter";
 export class HttpSearchAdapter implements SearchPort {
   private readonly sse = new SseAdapter();
 
-  async start(criteria: unknown): Promise<{ searchId: string }> {
+  async start(criteria: SearchCriteria): Promise<{ searchId: string }> {
     const response = await fetch(`${API_BASE_URL}/api/searches`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -22,7 +23,7 @@ export class HttpSearchAdapter implements SearchPort {
     return (await response.json()) as { searchId: string };
   }
 
-  subscribe(searchId: string, onEvent: (event: unknown) => void): () => void {
+  subscribe(searchId: string, onEvent: (event: SearchEvent) => void): () => void {
     return this.sse.subscribe(searchId, onEvent);
   }
 }

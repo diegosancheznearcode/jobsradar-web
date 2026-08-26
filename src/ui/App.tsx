@@ -1,19 +1,42 @@
 import { useMemo } from "react";
-import { HttpSearchAdapter } from "../infrastructure";
+import { useSearch } from "../application";
+import { CsvExportAdapter, HttpSearchAdapter } from "../infrastructure";
+import { ResultsTable } from "./ResultsTable";
+import { SearchForm } from "./SearchForm";
+import { StatusPanel } from "./StatusPanel";
 
-// Placeholder de Fase 1: solo confirma que ui/ → application/ →
-// infrastructure/ están cableados end-to-end (sección 9.1). La UI real
-// (formulario de búsqueda, tabla, exportación) llega en la Fase 7.
+// Fase 7 — formulario + tabla + SSE + exportación, cableados vía
+// application/useSearch. ui/ solo ve el puerto (SearchPort/ExportPort) y
+// el estado ya acumulado, nunca fetch/EventSource directamente (sección 9.1).
 function App() {
   const searchPort = useMemo(() => new HttpSearchAdapter(), []);
+  const exportPort = useMemo(() => new CsvExportAdapter(), []);
+  const { state, start } = useSearch(searchPort);
+
+  const isSearching = state.status === "starting" || state.status === "running";
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-slate-950 text-slate-100">
-      <h1 className="text-3xl font-semibold">JobsRadar</h1>
-      <p className="text-slate-400">
-        Frontend scaffolded (Fase 1) — {searchPort.constructor.name} listo, backend en{" "}
-        <code className="rounded bg-slate-800 px-1.5 py-0.5">jobsradar-api</code>.
-      </p>
+    <main className="flex min-h-screen flex-col items-center gap-6 bg-slate-950 px-4 py-10 text-slate-100">
+      <div className="flex flex-col items-center gap-1">
+        <h1 className="text-3xl font-semibold">JobsRadar</h1>
+        <p className="text-sm text-slate-400">Buscador de empresas remotas en Wellfound</p>
+      </div>
+
+      <SearchForm onSubmit={start} disabled={isSearching} />
+
+      <StatusPanel
+        status={state.status}
+        progress={state.progress}
+        failed={state.failed}
+        searchId={state.searchId}
+        exportPort={exportPort}
+      />
+
+      {state.status !== "idle" && (
+        <div className="w-full max-w-4xl">
+          <ResultsTable companies={state.companies} />
+        </div>
+      )}
     </main>
   );
 }
