@@ -37,10 +37,15 @@ pero **no** el token — pnpm rechaza expandir variables de entorno en
 credenciales que vienen de un `.npmrc` de proyecto (committeado), por
 seguridad. El token va en un `.npmrc` fuera del repo:
 
-- Desarrollo local: `pnpm config set "//npm.pkg.github.com/:_authToken" <tu-PAT-con-read:packages>`
-  (queda en tu `~/.npmrc` de usuario, nunca se commitea).
+- Desarrollo local: `pnpm config set "//npm.pkg.github.com/:_authToken" <tu-PAT>`
+  (queda en tu `~/.npmrc` de usuario, nunca se commitea). Tiene que ser un
+  **classic PAT** con scopes `read:packages` + `repo` — un fine-grained
+  token con permiso "Packages: Read-only" no funciona contra
+  `npm.pkg.github.com` (GitHub Packages no reconoce ese modelo de permisos
+  ahí, devuelve 403 igual; ver ARCHITECTURE.md sección 9, Fase 9).
 - CI: `actions/setup-node` con `registry-url` genera ese `.npmrc` de usuario
-  a partir del secret `JOBSRADAR_API_RO_TOKEN` — ver el workflow.
+  a partir del secret `JOBSRADAR_API_RO_TOKEN` (el mismo classic PAT) — ver
+  el workflow.
 
 ## Estado (Fase 1 — scaffold)
 

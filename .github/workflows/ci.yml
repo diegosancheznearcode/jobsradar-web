@@ -23,10 +23,11 @@ jobs:
       # @diegosancheznearcode/contracts se publica desde jobsradar-api a
       # GitHub Packages (ver ARCHITECTURE.md sección 9 y README). Como
       # jobsradar-api es privado, leer su paquete requiere un token con
-      # permiso de lectura sobre paquetes de ese repo — el mismo secret
-      # JOBSRADAR_API_RO_TOKEN que ya se usaba para el checkout sibling,
-      # ahora con el permiso "Packages: Read-only" agregado (Settings →
-      # Developer settings → Fine-grained tokens, en el token existente).
+      # scopes read:packages + repo. JOBSRADAR_API_RO_TOKEN (el mismo secret
+      # que antes usaba el checkout sibling) es ahora un classic PAT con esos
+      # scopes — un fine-grained token con "Packages: Read-only" NO sirve
+      # acá, GitHub Packages lo rechaza con 403 igual (ver ARCHITECTURE.md,
+      # Fase 9).
       - run: pnpm install --frozen-lockfile
         env:
           NODE_AUTH_TOKEN: ${{ secrets.JOBSRADAR_API_RO_TOKEN }}
