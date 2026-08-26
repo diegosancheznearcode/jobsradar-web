@@ -2,3 +2,5 @@ packages:
   - "."
 allowBuilds:
   msw: true
+minimumReleaseAgeExclude:
+  - '@diegosancheznearcode/contracts@0.1.0'

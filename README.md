@@ -20,22 +20,27 @@ pnpm dev
 Requiere que `jobsradar-api` esté corriendo en `VITE_API_URL`
 (por defecto `http://localhost:3000`).
 
-## `@jobsradar/contracts` — TODO conocido
+## `@diegosancheznearcode/contracts`
 
-Todavía no existe un registro npm privado, así que este repo depende de
-`@jobsradar/contracts` como referencia local:
+Se instala como una dependencia normal (`^0.1.0`) desde GitHub Packages —
+`jobsradar-api` la publica ahí en cada push a `main` (ver su
+`.github/workflows/ci.yml`). Como `jobsradar-api` es un repo privado, tanto
+el desarrollo local como el CI necesitan autenticarse contra
+`npm.pkg.github.com` para poder instalarla. `.npmrc` de este repo ya mapea el
+scope:
 
-```json
-"@jobsradar/contracts": "file:../jobsradar-api/packages/contracts"
+```
+@diegosancheznearcode:registry=https://npm.pkg.github.com
 ```
 
-Esto asume que `jobsradar-api` está clonado como carpeta hermana
-(`../jobsradar-api`) y con `packages/contracts` compilado
-(`pnpm --filter @jobsradar/contracts build`). El CI reproduce esto
-clonando `jobsradar-api` como sibling — ver el TODO marcado en
-`.github/workflows/ci.yml` (pendiente apuntar al remoto real). Cuando se
-publique el paquete a un registro real, se reemplaza por una versión normal
-(`@jobsradar/contracts@^0.x`) y este workaround desaparece.
+pero **no** el token — pnpm rechaza expandir variables de entorno en
+credenciales que vienen de un `.npmrc` de proyecto (committeado), por
+seguridad. El token va en un `.npmrc` fuera del repo:
+
+- Desarrollo local: `pnpm config set "//npm.pkg.github.com/:_authToken" <tu-PAT-con-read:packages>`
+  (queda en tu `~/.npmrc` de usuario, nunca se commitea).
+- CI: `actions/setup-node` con `registry-url` genera ese `.npmrc` de usuario
+  a partir del secret `JOBSRADAR_API_RO_TOKEN` — ver el workflow.
 
 ## Estado (Fase 1 — scaffold)
 
@@ -48,7 +53,7 @@ en la Fase 7 — ver la sección 12 de `docs/ARCHITECTURE.md`.
 
 ```
 src/
-├── domain/          tipos de UI derivados de @jobsradar/contracts, sin React
+├── domain/          tipos de UI derivados de @diegosancheznearcode/contracts, sin React
 ├── application/      casos de uso (useSearch) + puertos (SearchPort, ExportPort)
 ├── infrastructure/   adaptadores: HttpSearchAdapter, SseAdapter, CsvExportAdapter
 └── ui/               componentes, páginas (App.tsx) — consume application/ vía puertos

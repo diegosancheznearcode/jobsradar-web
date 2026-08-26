@@ -11,45 +11,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # TODO(Fase 1→2): @jobsradar/contracts todavía se consume como
-      # dependencia local (file:../jobsradar-api/packages/contracts, ver
-      # ARCHITECTURE.md sección 9 y README). Este checkout de jobsradar-api
-      # como sibling es lo que lo hace resoluble en CI. Cuando el paquete se
-      # publique a un registro real (GitHub Packages / npm privado), borrar
-      # este step y volver a `pnpm add @jobsradar/contracts@<version>`.
-      #
-      # jobsradar-api es privado: el GITHUB_TOKEN por defecto de este workflow
-      # NO tiene acceso a otro repo. Hace falta un Personal Access Token con
-      # permiso de lectura sobre jobsradar-api, guardado como secret
-      # JOBSRADAR_API_RO_TOKEN en este repo (Settings → Secrets → Actions).
-      - uses: actions/checkout@v4
-        with:
-          repository: diegosancheznearcode/jobsradar-api
-          path: jobsradar-api-sibling
-          token: ${{ secrets.JOBSRADAR_API_RO_TOKEN }}
-
-      - name: "Symlink sibling repo a la ruta que espera el file: dependency"
-        run: |
-          cd ..
-          ln -s "$GITHUB_WORKSPACE/jobsradar-api-sibling" jobsradar-api
-
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+          registry-url: https://npm.pkg.github.com
+          scope: "@diegosancheznearcode"
 
-      - name: Build @jobsradar/contracts (dependencia local)
-        working-directory: ../jobsradar-api
-        run: |
-          corepack enable
-          pnpm install --frozen-lockfile
-          pnpm --filter @jobsradar/contracts build
-
+      # @diegosancheznearcode/contracts se publica desde jobsradar-api a
+      # GitHub Packages (ver ARCHITECTURE.md sección 9 y README). Como
+      # jobsradar-api es privado, leer su paquete requiere un token con
+      # permiso de lectura sobre paquetes de ese repo — el mismo secret
+      # JOBSRADAR_API_RO_TOKEN que ya se usaba para el checkout sibling,
+      # ahora con el permiso "Packages: Read-only" agregado (Settings →
+      # Developer settings → Fine-grained tokens, en el token existente).
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.JOBSRADAR_API_RO_TOKEN }}
 
       - run: pnpm typecheck
 

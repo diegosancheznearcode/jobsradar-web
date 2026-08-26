@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@jobsradar/contracts':
-        specifier: file:../jobsradar-api/packages/contracts
-        version: file:../jobsradar-api/packages/contracts
+      '@diegosancheznearcode/contracts':
+        specifier: ^0.1.0
+        version: 0.1.0
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0))
@@ -138,6 +138,9 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
+  '@diegosancheznearcode/contracts@0.1.0':
+    resolution: {integrity: sha512-WDdZolqu33fWaFb+0DdbuywMBu/7Jzzp6Vas0xT1ATfoX4OZLgb9wQRbrtZbq9Gu223WkM59BdrRzOVDEBZcOA==, tarball: https://npm.pkg.github.com/download/@diegosancheznearcode/contracts/0.1.0/9777709e1e9d125031f8af761d0eddb296625053}
+
   '@exodus/bytes@1.15.1':
     resolution: {integrity: sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
@@ -181,9 +184,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@jobsradar/contracts@file:../jobsradar-api/packages/contracts':
-    resolution: {directory: ../jobsradar-api/packages/contracts, type: directory}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1424,6 +1424,10 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
+  '@diegosancheznearcode/contracts@0.1.0':
+    dependencies:
+      zod: 3.25.76
+
   '@exodus/bytes@1.15.1': {}
 
   '@inquirer/ansi@2.0.7': {}
@@ -1452,10 +1456,6 @@ snapshots:
   '@inquirer/type@4.0.7(@types/node@24.13.3)':
     optionalDependencies:
       '@types/node': 24.13.3
-
-  '@jobsradar/contracts@file:../jobsradar-api/packages/contracts':
-    dependencies:
-      zod: 3.25.76
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

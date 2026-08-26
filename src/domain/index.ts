@@ -1,6 +1,6 @@
-// Tipos de UI derivados de @jobsradar/contracts, sin dependencias de React.
+// Tipos de UI derivados de @diegosancheznearcode/contracts, sin dependencias de React.
 // Ver ARCHITECTURE.md sección 9. Los esquemas reales viven en
-// @jobsradar/contracts (Fase 2, jobsradar-api) — acá se re-exportan los
+// @diegosancheznearcode/contracts (Fase 2, jobsradar-api) — acá se re-exportan los
 // tipos Y los esquemas Zod que la UI necesita, para que ui/ y
 // application/ nunca importen directamente del paquete del backend.
 //
@@ -15,6 +15,6 @@ export type {
   Founder,
   JobPosting,
   SearchEvent,
-} from "@jobsradar/contracts";
+} from "@diegosancheznearcode/contracts";
 
-export { SearchCriteriaSchema, SearchEventSchema } from "@jobsradar/contracts";
+export { SearchCriteriaSchema, SearchEventSchema } from "@diegosancheznearcode/contracts";
