@@ -3,4 +3,4 @@ packages:
 allowBuilds:
   msw: true
 minimumReleaseAgeExclude:
-  - '@diegosancheznearcode/contracts@0.1.0'
+  - '@diegosancheznearcode/contracts@0.1.0 || 0.2.0'

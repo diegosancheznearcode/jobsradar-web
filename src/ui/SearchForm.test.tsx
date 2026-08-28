@@ -19,6 +19,20 @@ describe("SearchForm", () => {
     });
   });
 
+  it("incluye maxCompanySize cuando se completa ese campo", async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<SearchForm onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    await user.type(screen.getByLabelText("Tamaño máximo de empresa (empleados, opcional)"), "50");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ jobTitle: "Backend Engineer", maxCompanySize: 50 }),
+    );
+  });
+
   it("muestra un error y no llama a onSubmit si jobTitle es muy corto", async () => {
     const user = userEvent.setup();
     const onSubmit = vi.fn();
