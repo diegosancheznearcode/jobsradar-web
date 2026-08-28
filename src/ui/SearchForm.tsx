@@ -89,7 +89,7 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
 
       <div className="flex flex-col gap-1">
         <label htmlFor="targetCompanies" className="text-sm text-slate-300">
-          Empresas a buscar (1-50)
+          Cantidad de empresas a encontrar (1-50)
         </label>
         <input
           id="targetCompanies"
