@@ -45,13 +45,18 @@ describe("SearchForm", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
-  it("solo muestra el campo de ubicación cuando 'Solo remoto' está destildado", async () => {
+  it("manda siempre remoteOnly=true, fijo (sin checkbox ni campo de ubicación en el formulario)", async () => {
     const user = userEvent.setup();
-    render(<SearchForm onSubmit={vi.fn()} />);
+    const onSubmit = vi.fn();
+    render(<SearchForm onSubmit={onSubmit} />);
 
+    expect(screen.queryByLabelText("Solo remoto")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Ubicación")).not.toBeInTheDocument();
-    await user.click(screen.getByLabelText("Solo remoto"));
-    expect(screen.getByLabelText("Ubicación")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ remoteOnly: true }));
   });
 
   it("deshabilita los campos y el botón cuando disabled=true", () => {

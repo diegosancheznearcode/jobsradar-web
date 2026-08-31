@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { Company } from "../domain";
 import { ResultsTable } from "./ResultsTable";
@@ -44,6 +45,7 @@ describe("ResultsTable", () => {
     expect(screen.getByText("The Stablecoin Neobank for Emerging Markets")).toBeInTheDocument();
     expect(screen.getByText("1-10 Employees")).toBeInTheDocument();
     expect(screen.getByText("Karim Khattaby")).toBeInTheDocument();
+    expect(screen.getByText("Delaware")).toBeInTheDocument(); // ubicación del rol
     expect(screen.getByText("1")).toBeInTheDocument(); // roles abiertos
   });
 
@@ -55,5 +57,46 @@ describe("ResultsTable", () => {
     );
 
     expect(screen.getAllByText("—")).toHaveLength(5); // pitch, size, market, website, founders
+  });
+
+  it("muestra '—' en Ubicación si ningún job de la empresa tiene location", () => {
+    render(
+      <ResultsTable
+        companies={[makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null }] })]}
+      />,
+    );
+    expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("filtra la tabla por ubicación del rol", async () => {
+    const user = userEvent.setup();
+    const remote = makeCompany({
+      slug: "remota",
+      name: "Remota",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "San Mateo" }],
+    });
+    const other = makeCompany({
+      slug: "otra",
+      name: "Otra",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
+    });
+    render(<ResultsTable companies={[remote, other]} />);
+
+    expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Otra" })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Filtrar por ubicación del rol"), "san mateo");
+
+    expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
+  });
+
+  it("muestra un mensaje si ninguna empresa matchea el filtro de ubicación", async () => {
+    const user = userEvent.setup();
+    render(<ResultsTable companies={[makeCompany()]} />);
+
+    await user.type(screen.getByLabelText("Filtrar por ubicación del rol"), "ciudad-inexistente");
+
+    expect(screen.getByText("Ninguna empresa tiene un rol en esa ubicación.")).toBeInTheDocument();
   });
 });

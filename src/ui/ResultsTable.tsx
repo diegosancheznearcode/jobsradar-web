@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { flexRender } from "@tanstack/react-table";
 // @tanstack/react-table v9 rediseñó la API (useTable/createTableHook). La
 // v8 (useReactTable/createColumnHelper/getCoreRowModel) sigue disponible
@@ -12,16 +13,36 @@ export interface ResultsTableProps {
 
 const columnHelper = legacyCreateColumnHelper<Company>();
 
+function jobLocations(company: Company): string[] {
+  return [...new Set(company.jobs.map((job) => job.location).filter((location): location is string => Boolean(location)))];
+}
+
 // Tabla de resultados — ver ARCHITECTURE.md sección 12 (Fase 7). Recibe
 // `companies` ya acumulado por useSearch (vía company.found), no conoce
 // SSE ni SearchPort.
+//
+// Filtro de ubicación (pedido explícito del usuario, Fase 10): remoteOnly
+// queda fijo en SearchForm, así que Wellfound nunca filtra por ubicación en
+// la búsqueda misma (sección 3/urlBuilder.ts) — cada JobPosting sí trae su
+// propio `location` (ej. "San Mateo", aunque el rol sea remoto), así que el
+// filtro va acá, client-side, sobre lo que ya se encontró.
 export function ResultsTable({ companies }: ResultsTableProps) {
+  const [locationFilter, setLocationFilter] = useState("");
+
+  const filteredCompanies = useMemo(() => {
+    const needle = locationFilter.trim().toLowerCase();
+    if (needle === "") return companies;
+    return companies.filter((company) =>
+      jobLocations(company).some((location) => location.toLowerCase().includes(needle)),
+    );
+  }, [companies, locationFilter]);
+
   // El array de columnas va inline dentro de useLegacyTable(), no en una
   // const aparte: v9 (vía /legacy) tiene un problema de varianza en TValue
   // entre columnas heterogéneas cuando el array se tipa/infiere por fuera
   // — el tipado contextual del argumento sí lo resuelve bien acá adentro.
   const table = useLegacyTable({
-    data: companies,
+    data: filteredCompanies,
     columns: [
       columnHelper.accessor("name", {
         header: "Empresa",
@@ -69,6 +90,11 @@ export function ResultsTable({ companies }: ResultsTableProps) {
           return founders.map((f) => f.name).join(", ");
         },
       }),
+      columnHelper.accessor((row) => jobLocations(row).join(", "), {
+        id: "location",
+        header: "Ubicación",
+        cell: (info) => info.getValue() || "—",
+      }),
       columnHelper.accessor("jobs", {
         header: "Roles abiertos",
         cell: (info) => info.getValue().length,
@@ -88,31 +114,51 @@ export function ResultsTable({ companies }: ResultsTableProps) {
   }
 
   return (
-    <div className="w-full overflow-x-auto rounded border border-slate-800">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-slate-900 text-slate-400">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className="px-3 py-2 font-medium">
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                </th>
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="locationFilter" className="text-sm text-slate-300">
+          Filtrar por ubicación del rol
+        </label>
+        <input
+          id="locationFilter"
+          type="text"
+          value={locationFilter}
+          onChange={(e) => setLocationFilter(e.target.value)}
+          placeholder="San Mateo"
+          className="w-full max-w-xs rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+        />
+      </div>
+
+      {filteredCompanies.length === 0 ? (
+        <p className="text-sm text-slate-500">Ninguna empresa tiene un rol en esa ubicación.</p>
+      ) : (
+        <div className="w-full overflow-x-auto rounded border border-slate-800">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-900 text-slate-400">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th key={header.id} className="px-3 py-2 font-medium">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="border-t border-slate-800 text-slate-200">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 py-2">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="border-t border-slate-800 text-slate-200">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-3 py-2">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

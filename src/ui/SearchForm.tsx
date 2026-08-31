@@ -9,30 +9,32 @@ export interface SearchFormProps {
 }
 
 // Formulario de búsqueda — ver ARCHITECTURE.md sección 4.1
-// (SearchCriteriaSchema) y sección 3 (jobTitle/location/remoteOnly son lo
-// que construye la URL del lado del backend; acá solo se valida el
-// shape). targetCompanies usa el default del esquema (50) si se deja
-// vacío.
+// (SearchCriteriaSchema) y sección 3. targetCompanies usa el default del
+// esquema (50) si se deja vacío.
+//
+// remoteOnly y maxCompanySize fijos por ahora, sin control en el formulario — pedido explícito del
+// usuario tras probar los campos editables (ver ARCHITECTURE.md Fase 10).
+// remoteOnly=true hace que location nunca se use en buildRoleListingUrl
+// (packages/adapter-wellfound/src/urlBuilder.ts) — Wellfound no combina
+// remoto + ubicación en una misma búsqueda (confirmado en Fase 0), por eso
+// el input de Ubicación también se saca del formulario. El filtro de
+// ubicación que sí pidió el usuario es sobre la tabla de resultados
+// (job.location de cada rol ya encontrado), no sobre esta búsqueda — ver
+// ResultsTable.tsx.
+const FIXED_REMOTE_ONLY = true;
+const FIXED_MAX_COMPANY_SIZE = 50;
+
 export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
   const [jobTitle, setJobTitle] = useState("");
-  const [location, setLocation] = useState("");
-  const [remoteOnly, setRemoteOnly] = useState(true);
   const [targetCompanies, setTargetCompanies] = useState("50");
   const [error, setError] = useState<string | null>(null);
-
-  // Fijo en 50 por ahora, sin control en el formulario — pedido explícito
-  // del usuario tras probar el filtro editable (ver ARCHITECTURE.md Fase
-  // 10). Si más adelante hace falta editable de nuevo, es el mismo campo
-  // maxCompanySize de SearchCriteriaSchema, solo hay que volver a exponerlo.
-  const FIXED_MAX_COMPANY_SIZE = 50;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     const parsed = SearchCriteriaSchema.safeParse({
       jobTitle,
-      location: location.trim() === "" ? undefined : location,
-      remoteOnly,
+      remoteOnly: FIXED_REMOTE_ONLY,
       targetCompanies: targetCompanies === "" ? undefined : Number(targetCompanies),
       maxCompanySize: FIXED_MAX_COMPANY_SIZE,
     });
@@ -62,37 +64,6 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
           className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500 disabled:opacity-50"
         />
       </div>
-
-      <div className="flex items-center gap-2">
-        <input
-          id="remoteOnly"
-          type="checkbox"
-          checked={remoteOnly}
-          onChange={(e) => setRemoteOnly(e.target.checked)}
-          disabled={disabled}
-          className="h-4 w-4"
-        />
-        <label htmlFor="remoteOnly" className="text-sm text-slate-300">
-          Solo remoto
-        </label>
-      </div>
-
-      {!remoteOnly && (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="location" className="text-sm text-slate-300">
-            Ubicación
-          </label>
-          <input
-            id="location"
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Bogotá"
-            disabled={disabled}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500 disabled:opacity-50"
-          />
-        </div>
-      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="targetCompanies" className="text-sm text-slate-300">
