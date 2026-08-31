@@ -37,6 +37,18 @@ describe("applySearchEvent", () => {
     expect(applySearchEvent(idleState, event).companies).toEqual([company]);
   });
 
+  it("company.found repetido para el mismo slug reemplaza en vez de duplicar (Wellfound puede repetir una empresa entre páginas)", () => {
+    const first: SearchEvent = { type: "company.found", company, rank: 1 };
+    const stateWithCompany = applySearchEvent(idleState, first);
+
+    const again: Company = { ...company, market: "Banking" };
+    const result = applySearchEvent(stateWithCompany, { type: "company.found", company: again, rank: 2 });
+
+    // Una sola entrada, no dos — bug real: React tiraba "two children with
+    // the same key" y la fila se duplicaba en pantalla.
+    expect(result.companies).toEqual([again]);
+  });
+
   it("company.updated reemplaza la empresa existente (por slug) con el estado ya mergeado del backend", () => {
     const found: SearchEvent = { type: "company.found", company, rank: 1 };
     const stateWithCompany = applySearchEvent(idleState, found);
