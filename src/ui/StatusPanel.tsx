@@ -8,6 +8,9 @@ export interface StatusPanelProps {
   failed: FailedCompany[];
   searchId: string | null;
   exportPort: ExportPort;
+  // Mismo filtro que ResultsTable/SearchForm — el export tiene que coincidir
+  // con lo que se ve en pantalla (sección 9.1 resultado Fase 11).
+  locationFilter: string;
 }
 
 const STATUS_LABEL: Record<SearchStatus, string> = {
@@ -31,14 +34,14 @@ const STATUS_COLOR: Record<SearchStatus, string> = {
 // Progreso + fallos parciales + exportación — ver ARCHITECTURE.md sección
 // 7.1: "Una búsqueda con 47 de 50 empresas es un éxito, no un fallo", por
 // eso `failed` se muestra como lista informativa, no como error bloqueante.
-export function StatusPanel({ status, progress, failed, searchId, exportPort }: StatusPanelProps) {
+export function StatusPanel({ status, progress, failed, searchId, exportPort, locationFilter }: StatusPanelProps) {
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
     if (!searchId) return;
     setExporting(true);
     try {
-      await exportPort.downloadCsv(searchId);
+      await exportPort.downloadCsv(searchId, locationFilter);
     } finally {
       setExporting(false);
     }

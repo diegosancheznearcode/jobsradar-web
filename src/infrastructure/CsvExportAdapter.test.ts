@@ -37,6 +37,23 @@ describe("CsvExportAdapter.downloadCsv", () => {
     clickSpy.mockRestore();
   });
 
+  it("manda locationFilter como query param ?location=, para que el export coincida con lo filtrado en pantalla", async () => {
+    let capturedUrl: string | undefined;
+    server.use(
+      http.get("http://localhost:3000/api/searches/search-1/export", ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.text("slug,name\n", { headers: { "Content-Type": "text/csv" } });
+      }),
+    );
+
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    const adapter = new CsvExportAdapter();
+    await adapter.downloadCsv("search-1", "San Mateo");
+
+    expect(capturedUrl).toContain("?location=San%20Mateo");
+  });
+
   it("tira si el backend responde con error", async () => {
     server.use(http.get("http://localhost:3000/api/searches/search-1/export", () => HttpResponse.text("", { status: 404 })));
 

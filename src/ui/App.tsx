@@ -17,7 +17,8 @@ function App() {
 
   // Filtro de ubicación por rol — vive acá (no en SearchForm ni en
   // ResultsTable) porque lo renderiza el formulario (siempre visible,
-  // sección 9.1 resultado Fase 11) pero lo consume la tabla.
+  // sección 9.1 resultado Fase 11), lo consume la tabla, y también el
+  // export (StatusPanel) tiene que coincidir con lo que se ve filtrado.
   const [locationFilter, setLocationFilter] = useState("");
 
   return (
@@ -40,6 +41,7 @@ function App() {
         failed={state.failed}
         searchId={state.searchId}
         exportPort={exportPort}
+        locationFilter={locationFilter}
       />
 
       {state.status !== "idle" && (

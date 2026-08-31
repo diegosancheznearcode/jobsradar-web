@@ -4,8 +4,9 @@ import { API_BASE_URL } from "./config";
 // Implementa ExportPort contra GET /api/searches/:id/export
 // (ARCHITECTURE.md sección 7).
 export class CsvExportAdapter implements ExportPort {
-  async downloadCsv(searchId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/api/searches/${searchId}/export`);
+  async downloadCsv(searchId: string, locationFilter?: string): Promise<void> {
+    const query = locationFilter?.trim() ? `?location=${encodeURIComponent(locationFilter.trim())}` : "";
+    const response = await fetch(`${API_BASE_URL}/api/searches/${searchId}/export${query}`);
 
     if (!response.ok) {
       throw new Error(`GET /api/searches/${searchId}/export falló con status ${response.status}`);
