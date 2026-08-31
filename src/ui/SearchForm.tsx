@@ -18,8 +18,13 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
   const [location, setLocation] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(true);
   const [targetCompanies, setTargetCompanies] = useState("50");
-  const [maxCompanySize, setMaxCompanySize] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Fijo en 50 por ahora, sin control en el formulario — pedido explícito
+  // del usuario tras probar el filtro editable (ver ARCHITECTURE.md Fase
+  // 10). Si más adelante hace falta editable de nuevo, es el mismo campo
+  // maxCompanySize de SearchCriteriaSchema, solo hay que volver a exponerlo.
+  const FIXED_MAX_COMPANY_SIZE = 50;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -29,7 +34,7 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
       location: location.trim() === "" ? undefined : location,
       remoteOnly,
       targetCompanies: targetCompanies === "" ? undefined : Number(targetCompanies),
-      maxCompanySize: maxCompanySize === "" ? undefined : Number(maxCompanySize),
+      maxCompanySize: FIXED_MAX_COMPANY_SIZE,
     });
 
     if (!parsed.success) {
@@ -102,22 +107,6 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
           onChange={(e) => setTargetCompanies(e.target.value)}
           disabled={disabled}
           className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 disabled:opacity-50"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="maxCompanySize" className="text-sm text-slate-300">
-          Tamaño máximo de empresa (empleados, opcional)
-        </label>
-        <input
-          id="maxCompanySize"
-          type="number"
-          min={1}
-          value={maxCompanySize}
-          onChange={(e) => setMaxCompanySize(e.target.value)}
-          placeholder="Sin límite"
-          disabled={disabled}
-          className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500 disabled:opacity-50"
         />
       </div>
 
