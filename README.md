@@ -47,6 +47,16 @@ seguridad. El token va en un `.npmrc` fuera del repo:
   a partir del secret `JOBSRADAR_API_RO_TOKEN` (el mismo classic PAT) — ver
   el workflow.
 
+**Después de bumpear la versión de `contracts`** (`pnpm install` con el
+nuevo rango en `package.json`), hay que **reiniciar `pnpm dev`** si ya
+estaba corriendo — Vite pre-empaqueta las dependencias al arrancar
+(`node_modules/.vite`) y no vuelve a detectar sola que el paquete cambió de
+versión en medio de la sesión. Server viejo = sigue sirviendo el schema
+anterior en silencio (sin error), campos nuevos de `SearchCriteria`/
+`SearchEvent` se descartan como si no existieran. Pasó dos veces en la Fase
+11 real (`maxCompanySize` y `company.updated`) antes de caer en la cuenta.
+Si el reinicio normal no alcanza, borrar `node_modules/.vite` a mano.
+
 ## Estado (Fase 1 — scaffold)
 
 `App.tsx` solo confirma que `ui/ → application/ → infrastructure/` están
