@@ -44,7 +44,8 @@ describe("ResultsTable", () => {
     expect(screen.getByText("The Stablecoin Neobank for Emerging Markets")).toBeInTheDocument();
     expect(screen.getByText("1-10 Employees")).toBeInTheDocument();
     expect(screen.getByText("Karim Khattaby")).toBeInTheDocument();
-    expect(screen.getByText("Delaware")).toBeInTheDocument(); // ubicación del rol
+    // ubicación del rol: ciudad + "Remote" (el fixture tiene isRemote: true)
+    expect(screen.getByText("Delaware, Remote")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument(); // roles abiertos
   });
 
@@ -59,14 +60,27 @@ describe("ResultsTable", () => {
     expect(screen.getAllByText("—")).toHaveLength(5); // pitch, size, market, website, founders
   });
 
-  it("muestra '—' en Ubicación si ningún job de la empresa tiene location", () => {
+  it("muestra '—' en Ubicación solo si el job no tiene location NI es remoto", () => {
     render(
       <ResultsTable
-        companies={[makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null }] })]}
+        companies={[makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null, isRemote: false }] })]}
         locationFilter=""
       />,
     );
     expect(screen.getByText("—")).toBeInTheDocument();
+  });
+
+  it("un job remoto sin location muestra 'Remote' (no '—') y se puede filtrar por 'remote'", () => {
+    const company = makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null, isRemote: true }] });
+    const { rerender } = render(<ResultsTable companies={[company]} locationFilter="" />);
+
+    expect(screen.getByText("Remote")).toBeInTheDocument();
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
+
+    // "remote"/"Remote" son el mismo valor pese a la mayúscula — pedido
+    // explícito del usuario ("son homónimos").
+    rerender(<ResultsTable companies={[company]} locationFilter="remote" />);
+    expect(screen.getByRole("link", { name: "VaulFi" })).toBeInTheDocument();
   });
 
   it("filtra por locationFilter (controlado desde afuera, ver SearchForm)", () => {

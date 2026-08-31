@@ -18,8 +18,21 @@ export interface ResultsTableProps {
 
 const columnHelper = legacyCreateColumnHelper<Company>();
 
+// "Remote"/"remote" son el mismo valor (homónimos salvo mayúscula) — se
+// resuelve solo con el .toLowerCase() que ya hace el filtro más abajo, no
+// hace falta normalizar acá. Un job remoto entra siempre como "Remote",
+// tenga o no además una ciudad propia (ej. isRemote=true + location="San
+// Mateo" → aparece con las dos, no reemplaza una por la otra) — pedido
+// explícito del usuario: hoy job.isRemote no se mostraba ni se podía
+// filtrar en ningún lado de la tabla.
 function jobLocations(company: Company): string[] {
-  return [...new Set(company.jobs.map((job) => job.location).filter((location): location is string => Boolean(location)))];
+  const values = company.jobs.flatMap((job) => {
+    const jobValues: string[] = [];
+    if (job.location) jobValues.push(job.location);
+    if (job.isRemote) jobValues.push("Remote");
+    return jobValues;
+  });
+  return [...new Set(values)];
 }
 
 // Tabla de resultados — ver ARCHITECTURE.md sección 12 (Fase 7). Recibe
