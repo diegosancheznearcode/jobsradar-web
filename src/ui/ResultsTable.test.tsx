@@ -91,6 +91,25 @@ describe("ResultsTable", () => {
     expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
   });
 
+  it("muestra 'Mostrando X de Y' cuando el filtro reduce los resultados — sin esto un filtro olvidado confundía cuántas empresas encontró la búsqueda", () => {
+    const remote = makeCompany({
+      slug: "remota",
+      name: "Remota",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "San Mateo" }],
+    });
+    const other = makeCompany({
+      slug: "otra",
+      name: "Otra",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
+    });
+
+    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" />);
+    expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
+
+    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" />);
+    expect(screen.getByText("Mostrando 1 de 2 empresas — filtrado por ubicación")).toBeInTheDocument();
+  });
+
   it("muestra un mensaje si ninguna empresa matchea locationFilter", () => {
     render(<ResultsTable companies={[makeCompany()]} locationFilter="ciudad-inexistente" />);
     expect(screen.getByText("Ninguna empresa tiene un rol en esa ubicación.")).toBeInTheDocument();

@@ -112,8 +112,20 @@ export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
     getRowId: (row) => row.slug,
   });
 
+  // Sin esto, un filtro de ubicación activo reducía la tabla en silencio —
+  // el usuario veía "encontré 20, la tabla muestra 2" y no tenía forma de
+  // saber si era la búsqueda o el filtro (bug real reportado por el
+  // usuario, sección 9.1 resultado Fase 11).
+  const isFiltered = locationFilter.trim() !== "" && filteredCompanies.length !== companies.length;
+
   return (
     <div className="flex w-full flex-col gap-2">
+      {isFiltered && companies.length > 0 && (
+        <p className="text-sm text-slate-400">
+          Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación
+        </p>
+      )}
+
       {companies.length === 0 ? (
         <p className="text-sm text-slate-500">Todavía no hay empresas.</p>
       ) : filteredCompanies.length === 0 ? (
