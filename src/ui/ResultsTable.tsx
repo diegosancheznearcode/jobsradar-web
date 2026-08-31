@@ -109,10 +109,9 @@ export function ResultsTable({ companies }: ResultsTableProps) {
     getRowId: (row) => row.slug,
   });
 
-  if (companies.length === 0) {
-    return <p className="text-sm text-slate-500">Todavía no hay empresas.</p>;
-  }
-
+  // El filtro siempre está visible, aunque todavía no haya empresas (pedido
+  // explícito del usuario) — solo lo que va debajo (tabla/mensajes) cambia
+  // según haya o no resultados.
   return (
     <div className="flex w-full flex-col gap-2">
       <div className="flex flex-col gap-1">
@@ -129,7 +128,9 @@ export function ResultsTable({ companies }: ResultsTableProps) {
         />
       </div>
 
-      {filteredCompanies.length === 0 ? (
+      {companies.length === 0 ? (
+        <p className="text-sm text-slate-500">Todavía no hay empresas.</p>
+      ) : filteredCompanies.length === 0 ? (
         <p className="text-sm text-slate-500">Ninguna empresa tiene un rol en esa ubicación.</p>
       ) : (
         <div className="w-full overflow-x-auto rounded border border-slate-800">

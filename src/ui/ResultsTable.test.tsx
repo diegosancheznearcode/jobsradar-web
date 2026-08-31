@@ -35,6 +35,11 @@ describe("ResultsTable", () => {
     expect(screen.getByText("Todavía no hay empresas.")).toBeInTheDocument();
   });
 
+  it("el filtro de ubicación está visible aunque todavía no haya empresas", () => {
+    render(<ResultsTable companies={[]} />);
+    expect(screen.getByLabelText("Filtrar por ubicación del rol")).toBeInTheDocument();
+  });
+
   it("renderiza una fila por empresa con sus datos", () => {
     render(<ResultsTable companies={[makeCompany()]} />);
 
