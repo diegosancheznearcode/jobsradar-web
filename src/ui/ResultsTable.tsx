@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { flexRender } from "@tanstack/react-table";
 // @tanstack/react-table v9 rediseñó la API (useTable/createTableHook). La
 // v8 (useReactTable/createColumnHelper/getCoreRowModel) sigue disponible
@@ -9,6 +9,11 @@ import type { Company } from "../domain";
 
 export interface ResultsTableProps {
   companies: Company[];
+  // Controlado desde App.tsx (mismo estado que SearchForm renderiza como
+  // input) — ver ARCHITECTURE.md sección 9.1 resultado Fase 11: el filtro
+  // vive en el formulario, siempre visible, no acá, porque esta tabla no se
+  // renderiza hasta que arranca una búsqueda.
+  locationFilter: string;
 }
 
 const columnHelper = legacyCreateColumnHelper<Company>();
@@ -21,14 +26,12 @@ function jobLocations(company: Company): string[] {
 // `companies` ya acumulado por useSearch (vía company.found), no conoce
 // SSE ni SearchPort.
 //
-// Filtro de ubicación (pedido explícito del usuario, Fase 10): remoteOnly
+// Filtro de ubicación (pedido explícito del usuario, Fase 10/11): remoteOnly
 // queda fijo en SearchForm, así que Wellfound nunca filtra por ubicación en
 // la búsqueda misma (sección 3/urlBuilder.ts) — cada JobPosting sí trae su
 // propio `location` (ej. "San Mateo", aunque el rol sea remoto), así que el
-// filtro va acá, client-side, sobre lo que ya se encontró.
-export function ResultsTable({ companies }: ResultsTableProps) {
-  const [locationFilter, setLocationFilter] = useState("");
-
+// filtro se aplica acá, client-side, sobre lo que ya se encontró.
+export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
   const filteredCompanies = useMemo(() => {
     const needle = locationFilter.trim().toLowerCase();
     if (needle === "") return companies;
@@ -109,25 +112,8 @@ export function ResultsTable({ companies }: ResultsTableProps) {
     getRowId: (row) => row.slug,
   });
 
-  // El filtro siempre está visible, aunque todavía no haya empresas (pedido
-  // explícito del usuario) — solo lo que va debajo (tabla/mensajes) cambia
-  // según haya o no resultados.
   return (
     <div className="flex w-full flex-col gap-2">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="locationFilter" className="text-sm text-slate-300">
-          Filtrar por ubicación del rol
-        </label>
-        <input
-          id="locationFilter"
-          type="text"
-          value={locationFilter}
-          onChange={(e) => setLocationFilter(e.target.value)}
-          placeholder="San Mateo"
-          className="w-full max-w-xs rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500"
-        />
-      </div>
-
       {companies.length === 0 ? (
         <p className="text-sm text-slate-500">Todavía no hay empresas.</p>
       ) : filteredCompanies.length === 0 ? (

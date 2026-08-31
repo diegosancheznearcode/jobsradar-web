@@ -1,13 +1,27 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SearchForm } from "./SearchForm";
+
+function renderForm(overrides: Partial<ComponentProps<typeof SearchForm>> = {}) {
+  const onSubmit = vi.fn();
+  const onLocationFilterChange = vi.fn();
+  const utils = render(
+    <SearchForm
+      onSubmit={onSubmit}
+      locationFilter=""
+      onLocationFilterChange={onLocationFilterChange}
+      {...overrides}
+    />,
+  );
+  return { ...utils, onSubmit, onLocationFilterChange };
+}
 
 describe("SearchForm", () => {
   it("llama a onSubmit con el criteria parseado (defaults incluidos)", async () => {
     const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    render(<SearchForm onSubmit={onSubmit} />);
+    const { onSubmit } = renderForm();
 
     await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
     await user.click(screen.getByRole("button", { name: "Buscar" }));
@@ -22,8 +36,7 @@ describe("SearchForm", () => {
 
   it("manda siempre maxCompanySize=50, fijo (sin control en el formulario)", async () => {
     const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    render(<SearchForm onSubmit={onSubmit} />);
+    const { onSubmit } = renderForm();
 
     expect(screen.queryByLabelText(/Tamaño máximo/)).not.toBeInTheDocument();
 
@@ -35,8 +48,7 @@ describe("SearchForm", () => {
 
   it("muestra un error y no llama a onSubmit si jobTitle es muy corto", async () => {
     const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    render(<SearchForm onSubmit={onSubmit} />);
+    const { onSubmit } = renderForm();
 
     await user.type(screen.getByLabelText("Puesto"), "a");
     await user.click(screen.getByRole("button", { name: "Buscar" }));
@@ -45,13 +57,11 @@ describe("SearchForm", () => {
     expect(screen.getByRole("alert")).toBeInTheDocument();
   });
 
-  it("manda siempre remoteOnly=true, fijo (sin checkbox ni campo de ubicación en el formulario)", async () => {
+  it("manda siempre remoteOnly=true, fijo (sin checkbox en el formulario)", async () => {
     const user = userEvent.setup();
-    const onSubmit = vi.fn();
-    render(<SearchForm onSubmit={onSubmit} />);
+    const { onSubmit } = renderForm();
 
     expect(screen.queryByLabelText("Solo remoto")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Ubicación")).not.toBeInTheDocument();
 
     await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
     await user.click(screen.getByRole("button", { name: "Buscar" }));
@@ -59,9 +69,34 @@ describe("SearchForm", () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ remoteOnly: true }));
   });
 
-  it("deshabilita los campos y el botón cuando disabled=true", () => {
-    render(<SearchForm onSubmit={vi.fn()} disabled />);
+  it("el campo de ubicación está siempre visible, justo debajo de Puesto", () => {
+    renderForm();
+
+    const labels = screen.getAllByText(/^(Puesto|Ubicación del rol.*|Cantidad de empresas.*)$/).map((el) => el.textContent);
+    expect(labels[0]).toBe("Puesto");
+    expect(labels[1]).toMatch(/^Ubicación del rol/);
+  });
+
+  it("llama a onLocationFilterChange al escribir en el campo de ubicación (no forma parte de onSubmit)", async () => {
+    const user = userEvent.setup();
+    const { onLocationFilterChange, onSubmit } = renderForm();
+
+    await user.type(screen.getByLabelText(/Ubicación del rol/), "San Mateo");
+
+    expect(onLocationFilterChange).toHaveBeenCalled();
+    // location no es un campo de SearchCriteria acá — es un filtro aparte,
+    // nunca termina en el payload de onSubmit (ver ARCHITECTURE.md sección
+    // 9.1 resultado Fase 11).
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    const [payload] = onSubmit.mock.calls[0]!;
+    expect(payload).not.toHaveProperty("location");
+  });
+
+  it("deshabilita 'Puesto' y el botón cuando disabled=true, pero no el filtro de ubicación", () => {
+    renderForm({ disabled: true });
     expect(screen.getByLabelText("Puesto")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Buscando…" })).toBeDisabled();
+    expect(screen.getByLabelText(/Ubicación del rol/)).not.toBeDisabled();
   });
 });

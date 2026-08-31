@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { Company } from "../domain";
 import { ResultsTable } from "./ResultsTable";
@@ -31,17 +30,12 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
 
 describe("ResultsTable", () => {
   it("muestra un mensaje cuando no hay empresas todavía", () => {
-    render(<ResultsTable companies={[]} />);
+    render(<ResultsTable companies={[]} locationFilter="" />);
     expect(screen.getByText("Todavía no hay empresas.")).toBeInTheDocument();
   });
 
-  it("el filtro de ubicación está visible aunque todavía no haya empresas", () => {
-    render(<ResultsTable companies={[]} />);
-    expect(screen.getByLabelText("Filtrar por ubicación del rol")).toBeInTheDocument();
-  });
-
   it("renderiza una fila por empresa con sus datos", () => {
-    render(<ResultsTable companies={[makeCompany()]} />);
+    render(<ResultsTable companies={[makeCompany()]} locationFilter="" />);
 
     expect(screen.getByRole("link", { name: "VaulFi" })).toHaveAttribute(
       "href",
@@ -58,6 +52,7 @@ describe("ResultsTable", () => {
     render(
       <ResultsTable
         companies={[makeCompany({ pitch: null, size: null, market: null, websiteUrl: null, founders: [] })]}
+        locationFilter=""
       />,
     );
 
@@ -68,13 +63,13 @@ describe("ResultsTable", () => {
     render(
       <ResultsTable
         companies={[makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null }] })]}
+        locationFilter=""
       />,
     );
     expect(screen.getByText("—")).toBeInTheDocument();
   });
 
-  it("filtra la tabla por ubicación del rol", async () => {
-    const user = userEvent.setup();
+  it("filtra por locationFilter (controlado desde afuera, ver SearchForm)", () => {
     const remote = makeCompany({
       slug: "remota",
       name: "Remota",
@@ -85,23 +80,19 @@ describe("ResultsTable", () => {
       name: "Otra",
       jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
     });
-    render(<ResultsTable companies={[remote, other]} />);
+    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" />);
 
     expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Otra" })).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("Filtrar por ubicación del rol"), "san mateo");
+    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" />);
 
     expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
   });
 
-  it("muestra un mensaje si ninguna empresa matchea el filtro de ubicación", async () => {
-    const user = userEvent.setup();
-    render(<ResultsTable companies={[makeCompany()]} />);
-
-    await user.type(screen.getByLabelText("Filtrar por ubicación del rol"), "ciudad-inexistente");
-
+  it("muestra un mensaje si ninguna empresa matchea locationFilter", () => {
+    render(<ResultsTable companies={[makeCompany()]} locationFilter="ciudad-inexistente" />);
     expect(screen.getByText("Ninguna empresa tiene un rol en esa ubicación.")).toBeInTheDocument();
   });
 });

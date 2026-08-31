@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearch } from "../application";
 import { CsvExportAdapter, HttpSearchAdapter } from "../infrastructure";
 import { ResultsTable } from "./ResultsTable";
@@ -15,6 +15,11 @@ function App() {
 
   const isSearching = state.status === "starting" || state.status === "running";
 
+  // Filtro de ubicación por rol — vive acá (no en SearchForm ni en
+  // ResultsTable) porque lo renderiza el formulario (siempre visible,
+  // sección 9.1 resultado Fase 11) pero lo consume la tabla.
+  const [locationFilter, setLocationFilter] = useState("");
+
   return (
     <main className="flex min-h-screen flex-col items-center gap-6 bg-slate-950 px-4 py-10 text-slate-100">
       <div className="flex flex-col items-center gap-1">
@@ -22,7 +27,12 @@ function App() {
         <p className="text-sm text-slate-400">Buscador de empresas remotas en Wellfound</p>
       </div>
 
-      <SearchForm onSubmit={start} disabled={isSearching} />
+      <SearchForm
+        onSubmit={start}
+        disabled={isSearching}
+        locationFilter={locationFilter}
+        onLocationFilterChange={setLocationFilter}
+      />
 
       <StatusPanel
         status={state.status}
@@ -34,7 +44,7 @@ function App() {
 
       {state.status !== "idle" && (
         <div className="w-full max-w-4xl">
-          <ResultsTable companies={state.companies} />
+          <ResultsTable companies={state.companies} locationFilter={locationFilter} />
         </div>
       )}
     </main>

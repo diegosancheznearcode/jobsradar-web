@@ -6,6 +6,13 @@ import type { SearchCriteria } from "../domain";
 export interface SearchFormProps {
   onSubmit: (criteria: SearchCriteria) => void;
   disabled?: boolean;
+  // Filtro de ubicación por rol (job.location, sección 9.1 resultado Fase
+  // 11) — vive acá, no en su propio estado interno, porque el resultado se
+  // usa en ResultsTable (App.tsx lo levanta y lo pasa a ambos). No es parte
+  // de SearchCriteria: no se manda a Wellfound, filtra client-side lo que
+  // ya se encontró.
+  locationFilter: string;
+  onLocationFilterChange: (value: string) => void;
 }
 
 // Formulario de búsqueda — ver ARCHITECTURE.md sección 4.1
@@ -16,15 +23,15 @@ export interface SearchFormProps {
 // usuario tras probar los campos editables (ver ARCHITECTURE.md Fase 10).
 // remoteOnly=true hace que location nunca se use en buildRoleListingUrl
 // (packages/adapter-wellfound/src/urlBuilder.ts) — Wellfound no combina
-// remoto + ubicación en una misma búsqueda (confirmado en Fase 0), por eso
-// el input de Ubicación también se saca del formulario. El filtro de
-// ubicación que sí pidió el usuario es sobre la tabla de resultados
-// (job.location de cada rol ya encontrado), no sobre esta búsqueda — ver
-// ResultsTable.tsx.
+// remoto + ubicación en una misma búsqueda (confirmado en Fase 0). Por eso
+// el campo Ubicación de acá abajo no es el `location` de SearchCriteria:
+// es el filtro por job.location (Fase 11), reposicionado a este formulario
+// -siempre visible, debajo de Puesto- porque ResultsTable no se renderiza
+// hasta que arranca una búsqueda (App.tsx).
 const FIXED_REMOTE_ONLY = true;
 const FIXED_MAX_COMPANY_SIZE = 50;
 
-export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
+export function SearchForm({ onSubmit, disabled, locationFilter, onLocationFilterChange }: SearchFormProps) {
   const [jobTitle, setJobTitle] = useState("");
   const [targetCompanies, setTargetCompanies] = useState("50");
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +69,20 @@ export function SearchForm({ onSubmit, disabled }: SearchFormProps) {
           placeholder="Backend Engineer"
           disabled={disabled}
           className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500 disabled:opacity-50"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="locationFilter" className="text-sm text-slate-300">
+          Ubicación del rol (filtra los resultados, opcional)
+        </label>
+        <input
+          id="locationFilter"
+          type="text"
+          value={locationFilter}
+          onChange={(e) => onLocationFilterChange(e.target.value)}
+          placeholder="San Mateo"
+          className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500"
         />
       </div>
 
