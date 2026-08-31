@@ -46,6 +46,18 @@ export function applySearchEvent(state: SearchState, event: SearchEvent): Search
       return { ...state, progress: { found: event.found, target: event.target, page: event.page } };
     case "company.found":
       return { ...state, companies: [...state.companies, event.company] };
+    case "company.updated": {
+      // El backend ya manda el estado mergeado (no un delta) — solo hay que
+      // reemplazar la entrada existente por slug, nunca mergear campo a
+      // campo acá (sección 9.1 resultado Fase 11: sin este case, la tabla
+      // se quedaba para siempre con los datos parciales del company.found
+      // original).
+      const index = state.companies.findIndex((c) => c.slug === event.company.slug);
+      if (index === -1) return { ...state, companies: [...state.companies, event.company] };
+      const companies = [...state.companies];
+      companies[index] = event.company;
+      return { ...state, companies };
+    }
     case "company.failed":
       return { ...state, failed: [...state.failed, { slug: event.slug, reason: event.reason }] };
     case "paused":

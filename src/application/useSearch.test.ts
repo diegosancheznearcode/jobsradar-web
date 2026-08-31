@@ -37,6 +37,21 @@ describe("applySearchEvent", () => {
     expect(applySearchEvent(idleState, event).companies).toEqual([company]);
   });
 
+  it("company.updated reemplaza la empresa existente (por slug) con el estado ya mergeado del backend", () => {
+    const found: SearchEvent = { type: "company.found", company, rank: 1 };
+    const stateWithCompany = applySearchEvent(idleState, found);
+
+    const enriched: Company = { ...company, market: "Banking", websiteUrl: "https://vaulfi.com" };
+    const updated = applySearchEvent(stateWithCompany, { type: "company.updated", company: enriched });
+
+    expect(updated.companies).toEqual([enriched]);
+  });
+
+  it("company.updated para un slug que no está en la lista lo agrega (fallback seguro)", () => {
+    const result = applySearchEvent(idleState, { type: "company.updated", company });
+    expect(result.companies).toEqual([company]);
+  });
+
   it("company.failed agrega a la lista de fallidas", () => {
     const event: SearchEvent = { type: "company.failed", slug: "otra-co", reason: "not_found" };
     expect(applySearchEvent(idleState, event).failed).toEqual([{ slug: "otra-co", reason: "not_found" }]);
