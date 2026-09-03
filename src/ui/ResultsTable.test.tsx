@@ -20,7 +20,7 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
         location: "Delaware",
         isRemote: true,
         applyUrl: "https://wellfound.com/jobs/1-backend-engineer",
-        postedAt: null,
+        postedAt: new Date("2026-08-27T17:45:44Z"),
       },
     ],
     extraction: { strategy: "hydrated_state", confidence: 0.9, missing: [] },
@@ -47,6 +47,32 @@ describe("ResultsTable", () => {
     // ubicación del rol: ciudad + "Remote" (el fixture tiene isRemote: true)
     expect(screen.getByText("Delaware, Remote")).toBeInTheDocument();
     expect(screen.getByText("1")).toBeInTheDocument(); // roles abiertos
+    // fecha de publicación — pedido explícito del usuario: el dato ya se
+    // extraía (job.postedAt), no se mostraba en ningún lado de la tabla.
+    expect(screen.getByText(new Date("2026-08-27T17:45:44Z").toLocaleDateString("es"))).toBeInTheDocument();
+  });
+
+  it("muestra '—' en Publicado si ningún job tiene postedAt, y la fecha más reciente si hay varios", () => {
+    const sinFecha = makeCompany({
+      slug: "sin-fecha",
+      name: "SinFecha",
+      jobs: [{ ...makeCompany().jobs[0]!, postedAt: null }],
+    });
+    const { rerender } = render(<ResultsTable companies={[sinFecha]} locationFilter="" />);
+    expect(screen.getByText("—")).toBeInTheDocument();
+
+    const dosRoles = makeCompany({
+      slug: "dos-roles",
+      name: "DosRoles",
+      jobs: [
+        { ...makeCompany().jobs[0]!, externalId: "1", postedAt: new Date("2026-01-01T00:00:00Z") },
+        { ...makeCompany().jobs[0]!, externalId: "2", postedAt: new Date("2026-08-27T17:45:44Z") },
+      ],
+    });
+    rerender(<ResultsTable companies={[dosRoles]} locationFilter="" />);
+    // Se muestra la más reciente de las dos, no la primera del array.
+    expect(screen.getByText(new Date("2026-08-27T17:45:44Z").toLocaleDateString("es"))).toBeInTheDocument();
+    expect(screen.queryByText(new Date("2026-01-01T00:00:00Z").toLocaleDateString("es"))).not.toBeInTheDocument();
   });
 
   it("muestra '—' para campos null (market/website/pitch/size)", () => {

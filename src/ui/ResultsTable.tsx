@@ -25,6 +25,17 @@ const columnHelper = legacyCreateColumnHelper<Company>();
 // Mateo" → aparece con las dos, no reemplaza una por la otra) — pedido
 // explícito del usuario: hoy job.isRemote no se mostraba ni se podía
 // filtrar en ningún lado de la tabla.
+// Fecha de publicación más reciente entre los roles de la empresa — el
+// dato (job.postedAt) ya se extraía y guardaba bien desde Fase 3, solo no
+// se mostraba en ningún lado de la tabla (pedido explícito del usuario).
+// Una empresa puede tener varios roles con fechas distintas; se muestra
+// la más nueva como resumen de la fila, no una lista de todas.
+function mostRecentPostedAt(company: Company): Date | null {
+  const dates = company.jobs.map((job) => job.postedAt).filter((date): date is Date => date !== null);
+  if (dates.length === 0) return null;
+  return new Date(Math.max(...dates.map((d) => d.getTime())));
+}
+
 function jobLocations(company: Company): string[] {
   const values = company.jobs.flatMap((job) => {
     const jobValues: string[] = [];
@@ -110,6 +121,14 @@ export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
         id: "location",
         header: "Ubicación",
         cell: (info) => info.getValue() || "—",
+      }),
+      columnHelper.accessor((row) => mostRecentPostedAt(row)?.toISOString() ?? "", {
+        id: "postedAt",
+        header: "Publicado",
+        cell: (info) => {
+          const value = info.getValue();
+          return value ? new Date(value).toLocaleDateString("es") : "—";
+        },
       }),
       columnHelper.accessor("jobs", {
         header: "Roles abiertos",
