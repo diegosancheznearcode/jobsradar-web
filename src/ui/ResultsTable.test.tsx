@@ -11,6 +11,7 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
     size: "1-10 Employees",
     market: "Banking",
     websiteUrl: "https://vaulfi.com",
+    linkedinUrl: "https://www.linkedin.com/company/vaulfi",
     wellfoundUrl: "https://wellfound.com/company/vaulfi-1",
     founders: [{ name: "Karim Khattaby", role: "CTO", profileUrl: null, linkedinUrl: null, source: "company_profile" }],
     jobs: [
@@ -50,6 +51,18 @@ describe("ResultsTable", () => {
     // fecha de publicación — pedido explícito del usuario: el dato ya se
     // extraía (job.postedAt), no se mostraba en ningún lado de la tabla.
     expect(screen.getByText(new Date("2026-08-27T17:45:44Z").toLocaleDateString("es"))).toBeInTheDocument();
+    // LinkedIn de la EMPRESA — mismo pedido, viendo el ícono junto al
+    // Website en la página real de Wellfound.
+    expect(screen.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+      "href",
+      "https://www.linkedin.com/company/vaulfi",
+    );
+  });
+
+  it("muestra '—' en LinkedIn si la empresa no lo tiene", () => {
+    render(<ResultsTable companies={[makeCompany({ linkedinUrl: null })]} locationFilter="" />);
+    expect(screen.queryByRole("link", { name: "LinkedIn" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
 
   it("muestra '—' en Publicado si ningún job tiene postedAt, y la fecha más reciente si hay varios", () => {

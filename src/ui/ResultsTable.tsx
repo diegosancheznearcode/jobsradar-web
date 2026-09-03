@@ -109,6 +109,22 @@ export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
           );
         },
       }),
+      columnHelper.accessor("linkedinUrl", {
+        header: "LinkedIn",
+        cell: (info) => {
+          const url = info.getValue();
+          // LinkedIn de la EMPRESA, no de un founder puntual — pedido
+          // explícito del usuario, viendo el ícono junto al Website en la
+          // página real (sección 9.1 resultado Fase 11).
+          return url ? (
+            <a href={url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
+              LinkedIn
+            </a>
+          ) : (
+            "—"
+          );
+        },
+      }),
       columnHelper.accessor("founders", {
         header: "Founders",
         cell: (info) => {
