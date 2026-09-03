@@ -56,7 +56,11 @@ function App() {
       />
 
       {state.status !== "idle" && (
-        <div className="w-full max-w-4xl">
+        // Sin max-width — pedido explícito del usuario: con las columnas
+        // que ya tiene la tabla (Empresa/Pitch/Tamaño/Mercado/Sitio/
+        // Founders/Ubicación/Publicado/Roles), el ancho angosto de
+        // SearchForm/StatusPanel (max-w-xl, arriba) la apretaba de más.
+        <div className="w-full">
           <ResultsTable companies={state.companies} locationFilter={locationFilter} />
         </div>
       )}
