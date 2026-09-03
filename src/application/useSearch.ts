@@ -105,5 +105,15 @@ export function useSearch(searchPort: SearchPort) {
     [searchPort],
   );
 
-  return { state, start };
+  // Pedido explícito del usuario: un botón "Limpiar" que además de vaciar
+  // el formulario, "elimine las búsquedas" — vuelve el estado a idle
+  // (sin companies/status/progress) y corta cualquier suscripción SSE
+  // activa, igual que hace start() antes de arrancar una nueva.
+  const reset = useCallback(() => {
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+    setState(initialState);
+  }, []);
+
+  return { state, start, reset };
 }

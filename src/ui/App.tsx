@@ -12,9 +12,17 @@ import { StatusPanel } from "./StatusPanel";
 function App() {
   const searchPort = useMemo(() => new HttpSearchAdapter(), []);
   const exportPort = useMemo(() => new CsvExportAdapter(), []);
-  const { state, start } = useSearch(searchPort);
+  const { state, start, reset } = useSearch(searchPort);
 
   const isSearching = state.status === "starting" || state.status === "running";
+
+  const DEFAULT_TARGET_COMPANIES = "50";
+
+  // Puesto y Cantidad ahora viven acá (antes eran estado interno de
+  // SearchForm) — necesario para que el botón "Limpiar" pueda resetearlos
+  // desde afuera, igual que ya se hacía con locationFilter.
+  const [jobTitle, setJobTitle] = useState("");
+  const [targetCompanies, setTargetCompanies] = useState(DEFAULT_TARGET_COMPANIES);
 
   // Filtro de ubicación por rol — vive acá (no en SearchForm ni en
   // ResultsTable) porque lo renderiza el formulario (siempre visible,
@@ -22,14 +30,25 @@ function App() {
   // export (StatusPanel) tiene que coincidir con lo que se ve filtrado.
   const [locationFilter, setLocationFilter] = useState("");
 
-  // Se resetea al arrancar una búsqueda nueva — sin esto, un filtro
-  // olvidado de una búsqueda anterior seguía reduciendo en silencio los
-  // resultados de la siguiente (bug real reportado por el usuario: "le di
-  // a encontrar 20 empresas, solo me trajo 2" — el backend había
-  // encontrado 21, el filtro viejo las tapaba casi todas).
+  // Pedido explícito del usuario: el filtro de ubicación YA NO se borra al
+  // arrancar una búsqueda nueva ("no borres los filtros... cuando le doy
+  // consultar quita la ubicacion"). El indicador "Mostrando X de Y" en
+  // ResultsTable sigue visible, así que un filtro olvidado de una búsqueda
+  // anterior filtrando en silencio la nueva (bug real: "le di a encontrar
+  // 20 empresas, solo me trajo 2") queda igual de detectable sin necesidad
+  // de resetear el campo.
   function handleSubmit(criteria: SearchCriteria) {
-    setLocationFilter("");
     void start(criteria);
+  }
+
+  // Pedido explícito del usuario: botón "Limpiar" que restaura el
+  // formulario completo y "elimine las búsquedas" — vuelve useSearch a
+  // idle (sin companies/status/progress) además de limpiar los campos.
+  function handleReset() {
+    setJobTitle("");
+    setTargetCompanies(DEFAULT_TARGET_COMPANIES);
+    setLocationFilter("");
+    reset();
   }
 
   return (
@@ -42,9 +61,24 @@ function App() {
       <SearchForm
         onSubmit={handleSubmit}
         disabled={isSearching}
+        jobTitle={jobTitle}
+        onJobTitleChange={setJobTitle}
+        targetCompanies={targetCompanies}
+        onTargetCompaniesChange={setTargetCompanies}
         locationFilter={locationFilter}
         onLocationFilterChange={setLocationFilter}
       />
+
+      {/* Pedido explícito del usuario: botón que restaura el formulario
+          completo y borra la búsqueda actual (vuelve a idle). */}
+      <button
+        type="button"
+        onClick={handleReset}
+        disabled={isSearching}
+        className="rounded border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Limpiar
+      </button>
 
       <StatusPanel
         status={state.status}

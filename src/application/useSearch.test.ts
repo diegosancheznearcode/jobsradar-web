@@ -148,4 +148,27 @@ describe("useSearch", () => {
 
     expect(unsubscribe1).toHaveBeenCalledOnce();
   });
+
+  it("reset() vuelve el estado a idle y desuscribe la sesión activa — pedido explícito del usuario (botón Limpiar)", async () => {
+    const unsubscribe = vi.fn();
+    const port: SearchPort = {
+      start: vi.fn().mockResolvedValue({ searchId: "search-1" }),
+      subscribe: vi.fn().mockReturnValue(unsubscribe),
+    };
+    const { result } = renderHook(() => useSearch(port));
+
+    await act(async () => {
+      await result.current.start({ jobTitle: "Backend Engineer", remoteOnly: true, targetCompanies: 50 });
+    });
+    expect(result.current.state.status).toBe("running");
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(result.current.state.status).toBe("idle");
+    expect(result.current.state.searchId).toBeNull();
+    expect(result.current.state.companies).toEqual([]);
+  });
 });

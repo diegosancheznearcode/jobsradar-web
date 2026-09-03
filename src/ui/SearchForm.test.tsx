@@ -1,19 +1,38 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentProps } from "react";
+import { useState, type ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SearchForm } from "./SearchForm";
+
+// jobTitle/targetCompanies ahora son props controlados (viven en App.tsx,
+// no acá adentro) — pedido explícito del usuario: un botón "Limpiar" en
+// App.tsx necesita poder resetearlos desde afuera. Este wrapper simula ese
+// dueño externo del estado para que los tests de "escribir en el campo"
+// sigan funcionando igual que antes.
+function ControlledSearchForm(props: Partial<ComponentProps<typeof SearchForm>>) {
+  const [jobTitle, setJobTitle] = useState(props.jobTitle ?? "");
+  const [targetCompanies, setTargetCompanies] = useState(props.targetCompanies ?? "50");
+  const [locationFilter, setLocationFilter] = useState(props.locationFilter ?? "");
+
+  return (
+    <SearchForm
+      onSubmit={vi.fn()}
+      jobTitle={jobTitle}
+      onJobTitleChange={setJobTitle}
+      targetCompanies={targetCompanies}
+      onTargetCompaniesChange={setTargetCompanies}
+      locationFilter={locationFilter}
+      onLocationFilterChange={setLocationFilter}
+      {...props}
+    />
+  );
+}
 
 function renderForm(overrides: Partial<ComponentProps<typeof SearchForm>> = {}) {
   const onSubmit = vi.fn();
   const onLocationFilterChange = vi.fn();
   const utils = render(
-    <SearchForm
-      onSubmit={onSubmit}
-      locationFilter=""
-      onLocationFilterChange={onLocationFilterChange}
-      {...overrides}
-    />,
+    <ControlledSearchForm onSubmit={onSubmit} onLocationFilterChange={onLocationFilterChange} {...overrides} />,
   );
   return { ...utils, onSubmit, onLocationFilterChange };
 }
@@ -69,7 +88,7 @@ describe("SearchForm", () => {
     expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ remoteOnly: true }));
   });
 
-  it("el campo de ubicación está siempre visible, justo debajo de Puesto", () => {
+  it("el campo de ubicación está siempre visible, junto a Puesto (fila horizontal, pedido explícito del usuario)", () => {
     renderForm();
 
     const labels = screen.getAllByText(/^(Puesto|Ubicación del rol.*|Cantidad de empresas.*)$/).map((el) => el.textContent);
