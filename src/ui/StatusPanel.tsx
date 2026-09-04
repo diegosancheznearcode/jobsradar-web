@@ -11,6 +11,11 @@ export interface StatusPanelProps {
   // Mismo filtro que ResultsTable/SearchForm — el export tiene que coincidir
   // con lo que se ve en pantalla (sección 9.1 resultado Fase 11).
   locationFilter: string;
+  // useSearch ya lo trackeaba (evento SSE "error") pero nada lo renderizaba
+  // — bug real reportado por el usuario ("ayer funcionaba, hoy no"): el
+  // backend mandaba un mensaje claro explicando qué pasó, pero la UI solo
+  // mostraba el badge genérico "Error" sin ningún detalle.
+  errorMessage: string | null;
 }
 
 const STATUS_LABEL: Record<SearchStatus, string> = {
@@ -34,7 +39,15 @@ const STATUS_COLOR: Record<SearchStatus, string> = {
 // Progreso + fallos parciales + exportación — ver ARCHITECTURE.md sección
 // 7.1: "Una búsqueda con 47 de 50 empresas es un éxito, no un fallo", por
 // eso `failed` se muestra como lista informativa, no como error bloqueante.
-export function StatusPanel({ status, progress, failed, searchId, exportPort, locationFilter }: StatusPanelProps) {
+export function StatusPanel({
+  status,
+  progress,
+  failed,
+  searchId,
+  exportPort,
+  locationFilter,
+  errorMessage,
+}: StatusPanelProps) {
   const [exporting, setExporting] = useState(false);
 
   async function handleExport() {
@@ -66,6 +79,10 @@ export function StatusPanel({ status, progress, failed, searchId, exportPort, lo
           </span>
         )}
       </div>
+
+      {status === "error" && errorMessage && (
+        <p className="rounded border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-200">{errorMessage}</p>
+      )}
 
       {failed.length > 0 && (
         <details className="text-sm text-slate-400">

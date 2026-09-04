@@ -18,6 +18,7 @@ function renderPanel(overrides: Partial<ComponentProps<typeof StatusPanel>> = {}
       searchId={null}
       exportPort={fakeExportPort()}
       locationFilter=""
+      errorMessage={null}
       {...overrides}
     />,
   );
@@ -67,5 +68,18 @@ describe("StatusPanel", () => {
   it("no muestra el botón de exportar mientras status es 'running'", () => {
     renderPanel({ status: "running", progress: { found: 3, target: 50, page: 1 }, searchId: "s1" });
     expect(screen.queryByRole("button", { name: "Exportar CSV" })).not.toBeInTheDocument();
+  });
+
+  it("muestra errorMessage cuando status es 'error' — antes useSearch lo trackeaba pero nada lo renderizaba (bug real reportado por el usuario)", () => {
+    renderPanel({
+      status: "error",
+      errorMessage: 'Wellfound no reconoce "Mobile Developer" como un rol.',
+    });
+    expect(screen.getByText('Wellfound no reconoce "Mobile Developer" como un rol.')).toBeInTheDocument();
+  });
+
+  it("no muestra nada de error si status no es 'error', aunque errorMessage tenga texto de una búsqueda previa", () => {
+    renderPanel({ status: "done", searchId: "s1", errorMessage: "un error viejo que ya no aplica" });
+    expect(screen.queryByText("un error viejo que ya no aplica")).not.toBeInTheDocument();
   });
 });

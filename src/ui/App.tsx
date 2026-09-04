@@ -87,6 +87,7 @@ function App() {
         searchId={state.searchId}
         exportPort={exportPort}
         locationFilter={locationFilter}
+        errorMessage={state.errorMessage}
       />
 
       {state.status !== "idle" && (
