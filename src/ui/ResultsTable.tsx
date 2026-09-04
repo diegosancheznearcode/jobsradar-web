@@ -50,6 +50,17 @@ function jobLocations(company: Company): string[] {
   return [...new Set(values)];
 }
 
+// Un rol remoto sin ciudad propia ("Remote only • Everywhere" en la UI real
+// de Wellfound) aparece ahí para CUALQUIER búsqueda por ciudad — Wellfound
+// lo trata como elegible desde cualquier lado, no como "sin ubicación".
+// Pedido explícito del usuario tras confundir esto con un bug ("en la
+// búsqueda real sí me sale, pero en la página no"): sin este caso, nuestro
+// filtro de texto literal nunca matcheaba esos roles contra una ciudad
+// puntual, aunque Wellfound sí los mostraría.
+function hasLocationlessRemoteRole(company: Company): boolean {
+  return company.jobs.some((job) => job.isRemote && !job.location);
+}
+
 // Tabla de resultados — ver ARCHITECTURE.md sección 12 (Fase 7). Recibe
 // `companies` ya acumulado por useSearch (vía company.found), no conoce
 // SSE ni SearchPort.
@@ -63,8 +74,10 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
   const filteredCompanies = useMemo(() => {
     const needle = locationFilter.trim().toLowerCase();
     if (needle === "") return companies;
-    return companies.filter((company) =>
-      jobLocations(company).some((location) => location.toLowerCase().includes(needle)),
+    return companies.filter(
+      (company) =>
+        hasLocationlessRemoteRole(company) ||
+        jobLocations(company).some((location) => location.toLowerCase().includes(needle)),
     );
   }, [companies, locationFilter]);
 

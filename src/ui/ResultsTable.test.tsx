@@ -151,6 +151,24 @@ describe("ResultsTable", () => {
     expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
   });
 
+  it("un rol remoto sin ciudad propia ('Everywhere' en Wellfound) matchea cualquier filtro de ubicación — Wellfound lo trata como elegible desde cualquier lado", () => {
+    const everywhere = makeCompany({
+      slug: "peaktew",
+      name: "PeakTew",
+      jobs: [{ ...makeCompany().jobs[0]!, location: null, isRemote: true }],
+    });
+    const nyOnly = makeCompany({
+      slug: "otra",
+      name: "Otra",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "New York City", isRemote: false }],
+    });
+
+    render(<ResultsTable companies={[everywhere, nyOnly]} locationFilter="los angeles" onClearLocationFilter={noop} />);
+
+    expect(screen.getByRole("link", { name: "PeakTew" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
+  });
+
   it("muestra 'Mostrando X de Y' cuando el filtro reduce los resultados — sin esto un filtro olvidado confundía cuántas empresas encontró la búsqueda", () => {
     const remote = makeCompany({
       slug: "remota",
