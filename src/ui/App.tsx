@@ -95,7 +95,11 @@ function App() {
         // Founders/Ubicación/Publicado/Roles), el ancho angosto de
         // SearchForm/StatusPanel (max-w-xl, arriba) la apretaba de más.
         <div className="w-full">
-          <ResultsTable companies={state.companies} locationFilter={locationFilter} />
+          <ResultsTable
+            companies={state.companies}
+            locationFilter={locationFilter}
+            onClearLocationFilter={() => setLocationFilter("")}
+          />
         </div>
       )}
     </main>

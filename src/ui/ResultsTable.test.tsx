@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import type { Company } from "../domain";
 import { ResultsTable } from "./ResultsTable";
 
@@ -29,14 +30,18 @@ function makeCompany(overrides: Partial<Company> = {}): Company {
   };
 }
 
+// onClearLocationFilter no forma parte de lo que testean la mayoría de estos
+// casos — se pasa un no-op fijo salvo donde el test lo verifica puntualmente.
+const noop = () => {};
+
 describe("ResultsTable", () => {
   it("muestra un mensaje cuando no hay empresas todavía", () => {
-    render(<ResultsTable companies={[]} locationFilter="" />);
+    render(<ResultsTable companies={[]} locationFilter="" onClearLocationFilter={noop} />);
     expect(screen.getByText("Todavía no hay empresas.")).toBeInTheDocument();
   });
 
   it("renderiza una fila por empresa con sus datos", () => {
-    render(<ResultsTable companies={[makeCompany()]} locationFilter="" />);
+    render(<ResultsTable companies={[makeCompany()]} locationFilter="" onClearLocationFilter={noop} />);
 
     expect(screen.getByRole("link", { name: "VaulFi" })).toHaveAttribute(
       "href",
@@ -60,7 +65,7 @@ describe("ResultsTable", () => {
   });
 
   it("muestra '—' en LinkedIn si la empresa no lo tiene", () => {
-    render(<ResultsTable companies={[makeCompany({ linkedinUrl: null })]} locationFilter="" />);
+    render(<ResultsTable companies={[makeCompany({ linkedinUrl: null })]} locationFilter="" onClearLocationFilter={noop} />);
     expect(screen.queryByRole("link", { name: "LinkedIn" })).not.toBeInTheDocument();
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
   });
@@ -71,7 +76,7 @@ describe("ResultsTable", () => {
       name: "SinFecha",
       jobs: [{ ...makeCompany().jobs[0]!, postedAt: null }],
     });
-    const { rerender } = render(<ResultsTable companies={[sinFecha]} locationFilter="" />);
+    const { rerender } = render(<ResultsTable companies={[sinFecha]} locationFilter="" onClearLocationFilter={noop} />);
     expect(screen.getByText("—")).toBeInTheDocument();
 
     const dosRoles = makeCompany({
@@ -82,7 +87,7 @@ describe("ResultsTable", () => {
         { ...makeCompany().jobs[0]!, externalId: "2", postedAt: new Date("2026-08-27T17:45:44Z") },
       ],
     });
-    rerender(<ResultsTable companies={[dosRoles]} locationFilter="" />);
+    rerender(<ResultsTable companies={[dosRoles]} locationFilter="" onClearLocationFilter={noop} />);
     // Se muestra la más reciente de las dos, no la primera del array.
     expect(screen.getByText(new Date("2026-08-27T17:45:44Z").toLocaleDateString("es"))).toBeInTheDocument();
     expect(screen.queryByText(new Date("2026-01-01T00:00:00Z").toLocaleDateString("es"))).not.toBeInTheDocument();
@@ -93,6 +98,7 @@ describe("ResultsTable", () => {
       <ResultsTable
         companies={[makeCompany({ pitch: null, size: null, market: null, websiteUrl: null, founders: [] })]}
         locationFilter=""
+        onClearLocationFilter={noop}
       />,
     );
 
@@ -104,6 +110,7 @@ describe("ResultsTable", () => {
       <ResultsTable
         companies={[makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null, isRemote: false }] })]}
         locationFilter=""
+        onClearLocationFilter={noop}
       />,
     );
     expect(screen.getByText("—")).toBeInTheDocument();
@@ -111,14 +118,14 @@ describe("ResultsTable", () => {
 
   it("un job remoto sin location muestra 'Remote' (no '—') y se puede filtrar por 'remote'", () => {
     const company = makeCompany({ jobs: [{ ...makeCompany().jobs[0]!, location: null, isRemote: true }] });
-    const { rerender } = render(<ResultsTable companies={[company]} locationFilter="" />);
+    const { rerender } = render(<ResultsTable companies={[company]} locationFilter="" onClearLocationFilter={noop} />);
 
     expect(screen.getByText("Remote")).toBeInTheDocument();
     expect(screen.queryByText("—")).not.toBeInTheDocument();
 
     // "remote"/"Remote" son el mismo valor pese a la mayúscula — pedido
     // explícito del usuario ("son homónimos").
-    rerender(<ResultsTable companies={[company]} locationFilter="remote" />);
+    rerender(<ResultsTable companies={[company]} locationFilter="remote" onClearLocationFilter={noop} />);
     expect(screen.getByRole("link", { name: "VaulFi" })).toBeInTheDocument();
   });
 
@@ -133,12 +140,12 @@ describe("ResultsTable", () => {
       name: "Otra",
       jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
     });
-    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" />);
+    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" onClearLocationFilter={noop} />);
 
     expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Otra" })).toBeInTheDocument();
 
-    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" />);
+    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" onClearLocationFilter={noop} />);
 
     expect(screen.getByRole("link", { name: "Remota" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Otra" })).not.toBeInTheDocument();
@@ -156,10 +163,10 @@ describe("ResultsTable", () => {
       jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
     });
 
-    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" />);
+    const { rerender } = render(<ResultsTable companies={[remote, other]} locationFilter="" onClearLocationFilter={noop} />);
     expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
 
-    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" />);
+    rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" onClearLocationFilter={noop} />);
     expect(screen.getByText(/Mostrando 1 de 2 empresas — filtrado por ubicación/)).toBeInTheDocument();
     // Incluye el valor del filtro activo — pedido implícito del usuario tras
     // confundir un filtro olvidado con un bug de conteo (Fase 12).
@@ -167,7 +174,33 @@ describe("ResultsTable", () => {
   });
 
   it("muestra un mensaje si ninguna empresa matchea locationFilter", () => {
-    render(<ResultsTable companies={[makeCompany()]} locationFilter="ciudad-inexistente" />);
+    render(<ResultsTable companies={[makeCompany()]} locationFilter="ciudad-inexistente" onClearLocationFilter={noop} />);
     expect(screen.getByText("Ninguna empresa tiene un rol en esa ubicación.")).toBeInTheDocument();
+  });
+
+  it('el botón "Quitar filtro" del aviso llama a onClearLocationFilter — pedido implícito del usuario tras confundir el filtro persistente con un bug dos veces seguidas', async () => {
+    const onClearLocationFilter = vi.fn();
+    const remote = makeCompany({
+      slug: "remota",
+      name: "Remota",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "San Mateo" }],
+    });
+    const other = makeCompany({
+      slug: "otra",
+      name: "Otra",
+      jobs: [{ ...makeCompany().jobs[0]!, location: "New York City" }],
+    });
+
+    const user = userEvent.setup();
+    render(
+      <ResultsTable
+        companies={[remote, other]}
+        locationFilter="san mateo"
+        onClearLocationFilter={onClearLocationFilter}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Quitar filtro" }));
+    expect(onClearLocationFilter).toHaveBeenCalledOnce();
   });
 });

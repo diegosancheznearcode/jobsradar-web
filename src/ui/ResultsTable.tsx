@@ -14,6 +14,10 @@ export interface ResultsTableProps {
   // vive en el formulario, siempre visible, no acá, porque esta tabla no se
   // renderiza hasta que arranca una búsqueda.
   locationFilter: string;
+  // Pedido implícito del usuario, tras confundir el filtro persistente con
+  // un bug dos veces seguidas (Fase 12): botón directo en el aviso para
+  // sacarlo sin tener que volver al formulario de arriba.
+  onClearLocationFilter: () => void;
 }
 
 const columnHelper = legacyCreateColumnHelper<Company>();
@@ -55,7 +59,7 @@ function jobLocations(company: Company): string[] {
 // la búsqueda misma (sección 3/urlBuilder.ts) — cada JobPosting sí trae su
 // propio `location` (ej. "San Mateo", aunque el rol sea remoto), así que el
 // filtro se aplica acá, client-side, sobre lo que ya se encontró.
-export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
+export function ResultsTable({ companies, locationFilter, onClearLocationFilter }: ResultsTableProps) {
   const filteredCompanies = useMemo(() => {
     const needle = locationFilter.trim().toLowerCase();
     if (needle === "") return companies;
@@ -175,9 +179,18 @@ export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
         // aviso es la única señal de que hay menos filas a la vista de las
         // que realmente se encontraron. Incluye el valor del filtro, no solo
         // "filtrado por ubicación", para que sea obvio cuál quedó puesto.
-        <p className="rounded border border-amber-800 bg-amber-950/50 px-3 py-2 text-sm text-amber-200">
-          Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación:{" "}
-          <span className="font-medium">"{locationFilter}"</span>
+        <p className="flex flex-wrap items-center gap-2 rounded border border-amber-800 bg-amber-950/50 px-3 py-2 text-sm text-amber-200">
+          <span>
+            Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación:{" "}
+            <span className="font-medium">"{locationFilter}"</span>
+          </span>
+          <button
+            type="button"
+            onClick={onClearLocationFilter}
+            className="rounded border border-amber-700 px-2 py-0.5 text-xs font-medium text-amber-100 hover:bg-amber-900"
+          >
+            Quitar filtro
+          </button>
         </p>
       )}
 
