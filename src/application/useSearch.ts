@@ -95,7 +95,24 @@ export function useSearch(searchPort: SearchPort) {
       unsubscribeRef.current?.();
       setState({ ...initialState, status: "starting" });
 
-      const { searchId } = await searchPort.start(criteria);
+      // Sin este try/catch, un fallo de red en el POST inicial (backend
+      // caído, CORS, DNS) quedaba como una promesa rechazada sin manejar
+      // — App.tsx llama a start() con `void`, así que el error se perdía
+      // en silencio y la UI se quedaba trabada en "Iniciando…" para
+      // siempre, sin ningún mensaje. Mismo mecanismo que ya usa el evento
+      // SSE "error" (sección 7.1), para que StatusPanel lo muestre igual.
+      let searchId: string;
+      try {
+        ({ searchId } = await searchPort.start(criteria));
+      } catch (err) {
+        setState((prev) => ({
+          ...prev,
+          status: "error",
+          errorMessage: err instanceof Error ? err.message : "No se pudo conectar con el servidor.",
+        }));
+        return;
+      }
+
       setState((prev) => ({ ...prev, searchId, status: "running" }));
 
       unsubscribeRef.current = searchPort.subscribe(searchId, (event) => {

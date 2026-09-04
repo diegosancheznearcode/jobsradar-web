@@ -131,6 +131,22 @@ describe("useSearch", () => {
     });
   });
 
+  it('start() pasa a status "error" si el POST inicial falla en la red, en vez de dejar una promesa rechazada sin manejar — bug real: la UI quedaba trabada en "Iniciando…" para siempre y CI se caía por un unhandled rejection', async () => {
+    const port: SearchPort = {
+      start: vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED 127.0.0.1:3000")),
+      subscribe: vi.fn(),
+    };
+    const { result } = renderHook(() => useSearch(port));
+
+    await act(async () => {
+      await result.current.start({ jobTitle: "Backend Engineer", remoteOnly: true, targetCompanies: 50 });
+    });
+
+    expect(result.current.state.status).toBe("error");
+    expect(result.current.state.errorMessage).toBe("connect ECONNREFUSED 127.0.0.1:3000");
+    expect(port.subscribe).not.toHaveBeenCalled();
+  });
+
   it("desuscribe la sesión anterior si se llama a start() de nuevo", async () => {
     const unsubscribe1 = vi.fn();
     const port: SearchPort = {
