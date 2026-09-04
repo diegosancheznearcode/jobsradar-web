@@ -30,14 +30,15 @@ function App() {
   // export (StatusPanel) tiene que coincidir con lo que se ve filtrado.
   const [locationFilter, setLocationFilter] = useState("");
 
-  // Pedido explícito del usuario: el filtro de ubicación YA NO se borra al
-  // arrancar una búsqueda nueva ("no borres los filtros... cuando le doy
-  // consultar quita la ubicacion"). El indicador "Mostrando X de Y" en
-  // ResultsTable sigue visible, así que un filtro olvidado de una búsqueda
-  // anterior filtrando en silencio la nueva (bug real: "le di a encontrar
-  // 20 empresas, solo me trajo 2") queda igual de detectable sin necesidad
-  // de resetear el campo.
+  // Revertido de nuevo por pedido explícito del usuario (2026-09-04): con
+  // el filtro persistiendo entre búsquedas, un filtro olvidado de una
+  // búsqueda anterior seguía tapando en silencio los resultados de la
+  // siguiente ("Mira solo 5/5 empresas... no debería traerme 5 empresas en
+  // la visual") — el aviso ámbar + botón "Quitar filtro" en ResultsTable
+  // no fueron suficiente mitigación, seguía confundiendo. Vuelve a
+  // resetearse al arrancar una búsqueda nueva.
   function handleSubmit(criteria: SearchCriteria) {
+    setLocationFilter("");
     void start(criteria);
   }
 

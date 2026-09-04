@@ -30,4 +30,17 @@ describe("App", () => {
     expect(screen.getByLabelText("Puesto")).toHaveValue("");
     expect(screen.getByLabelText(/Ubicación del rol/)).toHaveValue("");
   });
+
+  it('el filtro de ubicación se borra solo al arrancar una búsqueda nueva — revertido por pedido explícito del usuario tras confundirse dos veces con un filtro olvidado tapando resultados', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    await user.type(screen.getByLabelText(/Ubicación del rol/), "Los Angeles");
+    expect(screen.getByLabelText(/Ubicación del rol/)).toHaveValue("Los Angeles");
+
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(screen.getByLabelText(/Ubicación del rol/)).toHaveValue("");
+  });
 });
