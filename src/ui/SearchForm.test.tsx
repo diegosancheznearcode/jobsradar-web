@@ -53,6 +53,36 @@ describe("SearchForm", () => {
     });
   });
 
+  it('escribir sobre el "50" precargado en Cantidad de empresas reemplaza el valor, no lo agrega al final — bug real reportado por el usuario: "5" sobre "50" se convertía en "505", superaba el máximo y la búsqueda no arrancaba en silencio', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    const targetInput = screen.getByLabelText(/Cantidad de empresas/) as HTMLInputElement;
+    await user.click(targetInput);
+    await user.keyboard("5");
+    expect(targetInput).toHaveValue(5);
+
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ targetCompanies: 5 }));
+  });
+
+  it("muestra un mensaje claro en español si la cantidad de empresas queda fuera de 1-50", async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderForm();
+
+    await user.type(screen.getByLabelText("Puesto"), "Backend Engineer");
+    const targetInput = screen.getByLabelText(/Cantidad de empresas/);
+    await user.clear(targetInput);
+    await user.type(targetInput, "999");
+    await user.click(screen.getByRole("button", { name: "Buscar" }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "La cantidad de empresas a encontrar tiene que ser un número entre 1 y 50.",
+    );
+  });
+
   it("manda siempre maxCompanySize=50, fijo (sin control en el formulario)", async () => {
     const user = userEvent.setup();
     const { onSubmit } = renderForm();

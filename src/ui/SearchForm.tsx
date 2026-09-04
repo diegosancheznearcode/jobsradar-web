@@ -1,6 +1,25 @@
 import { useState, type FormEvent } from "react";
+import type { ZodIssue } from "zod";
 import { SearchCriteriaSchema } from "../domain";
 import type { SearchCriteria } from "../domain";
+
+// Zod trae el mensaje en inglés por default ("Number must be less than or
+// equal to 50") — acá se traduce lo que puede fallar en este formulario,
+// no un mapeo genérico de todos los códigos de Zod. Bug real reportado por
+// el usuario: la búsqueda no arrancaba y no quedaba claro por qué — un
+// mensaje en inglés, técnico, era fácil de pasar por alto.
+function describeValidationError(issue: ZodIssue | undefined): string {
+  if (!issue) return "Datos inválidos.";
+  const field = issue.path[0];
+
+  if (field === "targetCompanies") {
+    return "La cantidad de empresas a encontrar tiene que ser un número entre 1 y 50.";
+  }
+  if (field === "jobTitle") {
+    return "Escribí un puesto (al menos 2 caracteres).";
+  }
+  return issue.message;
+}
 
 export interface SearchFormProps {
   onSubmit: (criteria: SearchCriteria) => void;
@@ -59,7 +78,7 @@ export function SearchForm({
     });
 
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Datos inválidos");
+      setError(describeValidationError(parsed.error.issues[0]));
       return;
     }
     setError(null);
@@ -107,10 +126,28 @@ export function SearchForm({
         <input
           id="targetCompanies"
           type="number"
-          min={1}
-          max={50}
+          // Sin min/max nativos, a propósito: un <input type="number"> con
+          // min/max hace que el navegador bloquee el evento submit del
+          // form ANTES de que React vea el click — nuestro handleSubmit
+          // (y el mensaje de error en español de acá abajo) nunca llegaba
+          // a ejecutarse para un valor fuera de rango, solo se veía el
+          // tooltip nativo del navegador (fácil de pasar por alto) y la
+          // búsqueda no arrancaba sin ninguna explicación clara en pantalla.
+          // Zod (SearchCriteriaSchema, min/max 1-50) sigue validando el
+          // rango igual — ahora es el único validador, con un mensaje
+          // consistente con el resto de la UI.
           value={targetCompanies}
           onChange={(e) => onTargetCompaniesChange(e.target.value)}
+          // Bug real reportado por el usuario: el campo viene precargado
+          // ("50" por default) — sin esto, hacer clic y escribir un número
+          // lo AGREGA al final ("5" sobre "50" da "505"), supera el máximo
+          // permitido, la validación falla en silencio (ver handleSubmit) y
+          // la pantalla se queda mostrando el resultado de la búsqueda
+          // anterior, dando la falsa impresión de que ignoró el número
+          // nuevo. Seleccionar todo al enfocar hace que escribir siempre
+          // reemplace el valor entero, como espera cualquiera al ver un
+          // campo numérico ya lleno.
+          onFocus={(e) => e.target.select()}
           disabled={disabled}
           className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 disabled:opacity-50"
         />
