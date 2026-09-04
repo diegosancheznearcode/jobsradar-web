@@ -31,7 +31,7 @@ describe("StatusPanel", () => {
 
   it("muestra el progreso cuando hay datos", () => {
     renderPanel({ status: "running", progress: { found: 3, target: 50, page: 1 }, searchId: "s1" });
-    expect(screen.getByText("3 / 50 empresas — página 1")).toBeInTheDocument();
+    expect(screen.getByText("3 / 50 empresas — revisando página 1 de Wellfound")).toBeInTheDocument();
     expect(screen.getByText("Buscando…")).toBeInTheDocument();
   });
 

@@ -160,7 +160,10 @@ describe("ResultsTable", () => {
     expect(screen.queryByText(/Mostrando/)).not.toBeInTheDocument();
 
     rerender(<ResultsTable companies={[remote, other]} locationFilter="san mateo" />);
-    expect(screen.getByText("Mostrando 1 de 2 empresas — filtrado por ubicación")).toBeInTheDocument();
+    expect(screen.getByText(/Mostrando 1 de 2 empresas — filtrado por ubicación/)).toBeInTheDocument();
+    // Incluye el valor del filtro activo — pedido implícito del usuario tras
+    // confundir un filtro olvidado con un bug de conteo (Fase 12).
+    expect(screen.getByText('"san mateo"')).toBeInTheDocument();
   });
 
   it("muestra un mensaje si ninguna empresa matchea locationFilter", () => {

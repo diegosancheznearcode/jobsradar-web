@@ -169,8 +169,15 @@ export function ResultsTable({ companies, locationFilter }: ResultsTableProps) {
   return (
     <div className="flex w-full flex-col gap-2">
       {isFiltered && companies.length > 0 && (
-        <p className="text-sm text-slate-400">
-          Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación
+        // Fondo ámbar (antes texto gris plano) — pedido implícito del usuario
+        // tras confundir "pedí 5, aparecieron 3" con un bug: como el filtro
+        // de ubicación ya no se borra solo entre búsquedas (Fase 12), este
+        // aviso es la única señal de que hay menos filas a la vista de las
+        // que realmente se encontraron. Incluye el valor del filtro, no solo
+        // "filtrado por ubicación", para que sea obvio cuál quedó puesto.
+        <p className="rounded border border-amber-800 bg-amber-950/50 px-3 py-2 text-sm text-amber-200">
+          Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación:{" "}
+          <span className="font-medium">"{locationFilter}"</span>
         </p>
       )}
 

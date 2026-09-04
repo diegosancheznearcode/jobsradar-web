@@ -56,8 +56,13 @@ export function StatusPanel({ status, progress, failed, searchId, exportPort, lo
           {STATUS_LABEL[status]}
         </span>
         {progress && (
+          // "página" acá es la página de listado de Wellfound que el
+          // scraper está leyendo (search-list, sección 10) — no hay
+          // paginación en la tabla de resultados (se muestran todas las
+          // filas juntas). Aclarado tras confusión real del usuario, que
+          // interpretó "página 6" como una paginación de la UI inexistente.
           <span className="text-sm text-slate-400">
-            {progress.found} / {progress.target} empresas — página {progress.page}
+            {progress.found} / {progress.target} empresas — revisando página {progress.page} de Wellfound
           </span>
         )}
       </div>
