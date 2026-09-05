@@ -102,7 +102,7 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
         ),
       }),
       columnHelper.accessor("pitch", {
-        header: "Pitch",
+        header: "Descripción",
         cell: (info) => info.getValue() ?? "—",
       }),
       columnHelper.accessor("size", {
