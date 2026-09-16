@@ -28,12 +28,12 @@ const STATUS_LABEL: Record<SearchStatus, string> = {
 };
 
 const STATUS_COLOR: Record<SearchStatus, string> = {
-  idle: "bg-slate-700 text-slate-200",
-  starting: "bg-amber-700 text-amber-100",
-  running: "bg-sky-700 text-sky-100",
-  paused: "bg-amber-700 text-amber-100",
-  done: "bg-emerald-700 text-emerald-100",
-  error: "bg-red-700 text-red-100",
+  idle: "bg-chip text-muted",
+  starting: "bg-warning text-warning-text",
+  running: "bg-accent text-on-primary",
+  paused: "bg-warning text-warning-text",
+  done: "bg-success text-success-text",
+  error: "bg-danger-bg text-danger",
 };
 
 // Progreso + fallos parciales + exportación — ver ARCHITECTURE.md sección
@@ -63,9 +63,9 @@ export function StatusPanel({
   if (status === "idle") return null;
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-2 rounded border border-slate-800 bg-slate-900/50 p-3">
+    <div className="flex w-full max-w-xl flex-col gap-2 rounded-panel border border-border bg-panel p-4">
       <div className="flex items-center justify-between">
-        <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[status]}`}>
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLOR[status]}`}>
           {STATUS_LABEL[status]}
         </span>
         {progress && (
@@ -74,18 +74,20 @@ export function StatusPanel({
           // paginación en la tabla de resultados (se muestran todas las
           // filas juntas). Aclarado tras confusión real del usuario, que
           // interpretó "página 6" como una paginación de la UI inexistente.
-          <span className="text-sm text-slate-400">
+          <span className="text-sm text-muted">
             {progress.found} / {progress.target} empresas — revisando página {progress.page} de Wellfound
           </span>
         )}
       </div>
 
       {status === "error" && errorMessage && (
-        <p className="rounded border border-red-800 bg-red-950/50 px-3 py-2 text-sm text-red-200">{errorMessage}</p>
+        <p className="rounded-card border border-danger bg-danger-bg px-3 py-2 text-sm text-danger">
+          {errorMessage}
+        </p>
       )}
 
       {failed.length > 0 && (
-        <details className="text-sm text-slate-400">
+        <details className="text-sm text-muted">
           <summary className="cursor-pointer">{failed.length} empresa(s) no se pudieron enriquecer</summary>
           <ul className="mt-1 list-inside list-disc">
             {failed.map((f) => (
@@ -102,7 +104,7 @@ export function StatusPanel({
           type="button"
           onClick={handleExport}
           disabled={exporting}
-          className="self-start rounded border border-slate-700 px-3 py-1.5 text-sm text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+          className="self-start rounded-control border border-border bg-panel px-3 py-1.5 text-sm text-text hover:bg-bg disabled:opacity-50"
         >
           {exporting ? "Exportando…" : "Exportar CSV"}
         </button>

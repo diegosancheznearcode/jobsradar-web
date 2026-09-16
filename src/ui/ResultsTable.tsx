@@ -95,9 +95,9 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
             href={info.row.original.wellfoundUrl}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-sky-400 hover:underline"
+            className="font-medium text-accent hover:underline"
           >
-            {info.getValue()}
+            {info.getValue()} <span aria-hidden="true">↗</span>
           </a>
         ),
       }),
@@ -118,8 +118,8 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
         cell: (info) => {
           const url = info.getValue();
           return url ? (
-            <a href={url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
-              {new URL(url).hostname}
+            <a href={url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+              {new URL(url).hostname} <span aria-hidden="true">↗</span>
             </a>
           ) : (
             "—"
@@ -134,8 +134,8 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
           // explícito del usuario, viendo el ícono junto al Website en la
           // página real (sección 9.1 resultado Fase 11).
           return url ? (
-            <a href={url} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
-              LinkedIn
+            <a href={url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+              LinkedIn <span aria-hidden="true">↗</span>
             </a>
           ) : (
             "—"
@@ -192,7 +192,7 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
         // aviso es la única señal de que hay menos filas a la vista de las
         // que realmente se encontraron. Incluye el valor del filtro, no solo
         // "filtrado por ubicación", para que sea obvio cuál quedó puesto.
-        <p className="flex flex-wrap items-center gap-2 rounded border border-amber-800 bg-amber-950/50 px-3 py-2 text-sm text-amber-200">
+        <p className="flex flex-wrap items-center gap-2 rounded-card border border-suggestion-border bg-suggestion px-3 py-2 text-sm text-warning-text">
           <span>
             Mostrando {filteredCompanies.length} de {companies.length} empresas — filtrado por ubicación:{" "}
             <span className="font-medium">"{locationFilter}"</span>
@@ -200,7 +200,7 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
           <button
             type="button"
             onClick={onClearLocationFilter}
-            className="rounded border border-amber-700 px-2 py-0.5 text-xs font-medium text-amber-100 hover:bg-amber-900"
+            className="rounded-full border border-suggestion-border px-2 py-0.5 text-xs font-medium text-warning-text hover:bg-warning"
           >
             Quitar filtro
           </button>
@@ -208,13 +208,13 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
       )}
 
       {companies.length === 0 ? (
-        <p className="text-sm text-slate-500">Todavía no hay empresas.</p>
+        <p className="text-sm text-muted">Todavía no hay empresas.</p>
       ) : filteredCompanies.length === 0 ? (
-        <p className="text-sm text-slate-500">Ninguna empresa tiene un rol en esa ubicación.</p>
+        <p className="text-sm text-muted">Ninguna empresa tiene un rol en esa ubicación.</p>
       ) : (
-        <div className="w-full overflow-x-auto rounded border border-slate-800">
+        <div className="w-full overflow-x-auto rounded-panel border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-900 text-slate-400">
+            <thead className="bg-chip text-muted">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
@@ -227,7 +227,7 @@ export function ResultsTable({ companies, locationFilter, onClearLocationFilter 
             </thead>
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-t border-slate-800 text-slate-200">
+                <tr key={row.id} className="border-t border-border text-text">
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-3 py-2">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

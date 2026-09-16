@@ -1,1 +1,150 @@
 @import "tailwindcss";
+
+/* Paleta y escala de radios adaptadas de talentradar-frontend
+   (C:\Users\DI3GO\claude_code\talentradar-frontend\src\index.css) — pedido
+   explícito del usuario: "adaptar los colores y estilos igual a esta
+   aplicación".
+   Tailwind v4 genera utilidades automáticamente desde estos tokens:
+   --color-X → bg-X/text-X/border-X, --radius-X → rounded-X. */
+@theme {
+  --color-bg: #f5f5f5;
+  --color-panel: #ffffff;
+  --color-border: #dfe4ea;
+  --color-text: #08376b;
+  --color-muted: #566986;
+  --color-primary: #08376b;
+  --color-primary-dark: #052949;
+  --color-accent: #2f90b0;
+  --color-accent-light: #35c0ed;
+  --color-on-primary: #ffffff;
+  --color-chip: #eaf1f6;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-success: #e3faea;
+  --color-success-text: #1a6b3a;
+  --color-warning: #fef3c7;
+  --color-warning-text: #92400e;
+  --color-suggestion: #fff7e6;
+  --color-suggestion-border: #e8b23a;
+  --color-overlay: rgba(245, 245, 245, 0.85);
+
+  --radius-control: 6px;
+  --radius-card: 8px;
+  --radius-panel: 10px;
+}
+
+:root {
+  color-scheme: light;
+}
+
+/* Modo oscuro — pedido explícito del usuario, portado de
+   talentradar-frontend (mismo mecanismo: atributo data-theme en <html>, sin
+   persistencia ni preferencia de sistema — arranca claro siempre, el
+   toggle en App.tsx/ThemeToggle.tsx solo cambia la apariencia de la
+   sesión). Los tokens que no existían en el original (danger-bg, warning,
+   warning-text — invenciones propias de esta adaptación, sección 9
+   resultado Fase 12) se derivan siguiendo el mismo patrón tonal que sus
+   pares reales (suggestion/success: fondo oscuro saturado + texto claro). */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0b1220;
+  --color-panel: #131b2c;
+  --color-border: #283350;
+  --color-text: #e7edf5;
+  --color-muted: #93a2bb;
+  --color-primary: #35c0ed;
+  --color-primary-dark: #6ad2f2;
+  --color-accent: #35c0ed;
+  --color-accent-light: #6ad2f2;
+  --color-on-primary: #052949;
+  --color-chip: #1c2740;
+  --color-danger: #f87171;
+  --color-danger-bg: #3a1414;
+  --color-success: #103524;
+  --color-success-text: #4fd08a;
+  --color-warning: #3a2f13;
+  --color-warning-text: #e8b23a;
+  --color-suggestion: #3a2f13;
+  --color-suggestion-border: #b8862f;
+  --color-overlay: rgba(11, 18, 32, 0.85);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Logo claro/oscuro (mismo mecanismo que talentradar-frontend, pedido
+   explícito del usuario): los dos <img> están siempre en el DOM,
+   display:none saca el que no toca — así no participa del layout
+   flex/grid del contenedor donde esté colgado. */
+.logo-oscuro {
+  display: none;
+}
+
+:root[data-theme="dark"] .logo-claro {
+  display: none;
+}
+
+:root[data-theme="dark"] .logo-oscuro {
+  display: block;
+}
+
+/* Spinner + overlay de carga — portados de talentradar-frontend
+   (.spinner/.spinner-grande/@keyframes girar/.overlay-cargando), pedido
+   explícito del usuario: mostrar un spinner mientras dura la búsqueda.
+   currentColor toma el color de texto de donde se use, sin necesitar una
+   variante propia. */
+.spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 7px;
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: girar 0.7s linear infinite;
+}
+
+.spinner-grande {
+  width: 40px;
+  height: 40px;
+  border-width: 4px;
+  margin-right: 0;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Overlay de pantalla completa mientras dura la búsqueda — bloquea toda la
+   pantalla en vez de solo deshabilitar el formulario, para que no se
+   pueda disparar una segunda búsqueda mientras la primera sigue en curso. */
+.overlay-cargando {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.overlay-cargando-caja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-primary);
+  font-weight: 600;
+}

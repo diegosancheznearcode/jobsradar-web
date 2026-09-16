@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@diegosancheznearcode/contracts':
-        specifier: ^0.4.0
-        version: 0.4.0
+        specifier: ^0.5.0
+        version: 0.5.0
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0))
@@ -138,8 +138,8 @@ packages:
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
 
-  '@diegosancheznearcode/contracts@0.4.0':
-    resolution: {integrity: sha512-m2NsNDo3jYCpghIbbbJkbF1dkh4fKQaq6LnI+Y63VBmMiYwfPfoEtOVIRPJkbqkZ7lA1I2zobQQ59oVER8sjxQ==, tarball: https://npm.pkg.github.com/download/@diegosancheznearcode/contracts/0.4.0/d8869339bca9bd821af7fadca225ae1a522dfb5d}
+  '@diegosancheznearcode/contracts@0.5.0':
+    resolution: {integrity: sha512-S04GwoZH3i03mjlLrJxVp9Km/trH95xJRZhx71TE+QyOoRGXrgf6TVJ3UUb9Ie3MUn7TRK0tbZm73tW3vLsi/g==, tarball: https://npm.pkg.github.com/download/@diegosancheznearcode/contracts/0.5.0/20526524fb3e0daede61d7957c340df538bacd25}
 
   '@exodus/bytes@1.15.1':
     resolution: {integrity: sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q==}
@@ -1424,7 +1424,7 @@ snapshots:
 
   '@csstools/css-tokenizer@4.0.0': {}
 
-  '@diegosancheznearcode/contracts@0.4.0':
+  '@diegosancheznearcode/contracts@0.5.0':
     dependencies:
       zod: 3.25.76
 

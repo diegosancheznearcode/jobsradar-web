@@ -27,6 +27,13 @@ export interface SearchState {
   companies: Company[];
   failed: FailedCompany[];
   errorMessage: string | null;
+  // Pedido explícito del usuario ("el spinner no se puede dejar hasta que
+  // cargue todo"): status "done" solo significa que el LISTADO terminó, el
+  // enriquecimiento en segundo plano (company-detail) puede seguir un rato
+  // más (sección 10). Arranca en false en cada start(); el evento SSE
+  // "enrichment.done" lo pasa a true — ver App.tsx para cómo se usa junto
+  // a status para decidir cuándo ocultar el spinner.
+  enrichmentDone: boolean;
 }
 
 const initialState: SearchState = {
@@ -36,6 +43,7 @@ const initialState: SearchState = {
   companies: [],
   failed: [],
   errorMessage: null,
+  enrichmentDone: false,
 };
 
 // Reemplaza por slug si ya existe, agrega si es nuevo — usado tanto por
@@ -75,6 +83,8 @@ export function applySearchEvent(state: SearchState, event: SearchEvent): Search
       return { ...state, status: "paused" };
     case "done":
       return { ...state, status: "done" };
+    case "enrichment.done":
+      return { ...state, enrichmentDone: true };
     case "error":
       return { ...state, status: "error", errorMessage: event.message };
     default:
@@ -95,29 +105,27 @@ export function useSearch(searchPort: SearchPort) {
       unsubscribeRef.current?.();
       setState({ ...initialState, status: "starting" });
 
-      // Sin este try/catch, un fallo de red en el POST inicial (backend
-      // caído, CORS, DNS) quedaba como una promesa rechazada sin manejar
-      // — App.tsx llama a start() con `void`, así que el error se perdía
-      // en silencio y la UI se quedaba trabada en "Iniciando…" para
-      // siempre, sin ningún mensaje. Mismo mecanismo que ya usa el evento
-      // SSE "error" (sección 7.1), para que StatusPanel lo muestre igual.
-      let searchId: string;
+      // Sin este try/catch, un fallo acá (red en el POST inicial —backend
+      // caído, CORS, DNS—, o subscribe() tirando al construir el
+      // EventSource) quedaba como una promesa rechazada sin manejar —
+      // App.tsx llama a start() con `void`, así que el error se perdía en
+      // silencio y la UI se quedaba trabada en "Iniciando…" para siempre,
+      // sin ningún mensaje. Mismo mecanismo que ya usa el evento SSE
+      // "error" (sección 7.1), para que StatusPanel lo muestre igual.
       try {
-        ({ searchId } = await searchPort.start(criteria));
+        const { searchId } = await searchPort.start(criteria);
+        setState((prev) => ({ ...prev, searchId, status: "running" }));
+
+        unsubscribeRef.current = searchPort.subscribe(searchId, (event) => {
+          setState((prev) => applySearchEvent(prev, event));
+        });
       } catch (err) {
         setState((prev) => ({
           ...prev,
           status: "error",
           errorMessage: err instanceof Error ? err.message : "No se pudo conectar con el servidor.",
         }));
-        return;
       }
-
-      setState((prev) => ({ ...prev, searchId, status: "running" }));
-
-      unsubscribeRef.current = searchPort.subscribe(searchId, (event) => {
-        setState((prev) => applySearchEvent(prev, event));
-      });
     },
     [searchPort],
   );

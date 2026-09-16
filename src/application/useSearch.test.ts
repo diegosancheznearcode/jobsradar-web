@@ -25,6 +25,7 @@ const idleState = {
   companies: [],
   failed: [],
   errorMessage: null,
+  enrichmentDone: false,
 };
 
 describe("applySearchEvent", () => {
@@ -85,6 +86,14 @@ describe("applySearchEvent", () => {
     expect(idleState.companies).toEqual([]);
     expect(next).not.toBe(idleState);
   });
+
+  it('"enrichment.done" pasa enrichmentDone a true — pedido explícito del usuario ("el spinner no se puede dejar hasta que cargue todo")', () => {
+    expect(idleState.enrichmentDone).toBe(false);
+    const next = applySearchEvent(idleState, { type: "enrichment.done" });
+    expect(next.enrichmentDone).toBe(true);
+    // "done" (listado) no lo toca — son señales independientes.
+    expect(applySearchEvent(idleState, { type: "done", total: 50, partial: 2 }).enrichmentDone).toBe(false);
+  });
 });
 
 function fakeSearchPort(): SearchPort & { emit: (event: SearchEvent) => void } {
@@ -131,6 +140,27 @@ describe("useSearch", () => {
     });
   });
 
+  it('start() nuevo arranca con enrichmentDone en false, aunque la búsqueda anterior ya hubiera terminado de enriquecer — pedido explícito del usuario ("el spinner no se puede dejar hasta que cargue todo")', async () => {
+    const port = fakeSearchPort();
+    const { result } = renderHook(() => useSearch(port));
+
+    await act(async () => {
+      await result.current.start({ jobTitle: "Backend Engineer", remoteOnly: true, targetCompanies: 50 });
+    });
+    act(() => {
+      port.emit({ type: "enrichment.done" });
+    });
+    await waitFor(() => {
+      expect(result.current.state.enrichmentDone).toBe(true);
+    });
+
+    await act(async () => {
+      await result.current.start({ jobTitle: "Frontend Engineer", remoteOnly: true, targetCompanies: 50 });
+    });
+
+    expect(result.current.state.enrichmentDone).toBe(false);
+  });
+
   it('start() pasa a status "error" si el POST inicial falla en la red, en vez de dejar una promesa rechazada sin manejar — bug real: la UI quedaba trabada en "Iniciando…" para siempre y CI se caía por un unhandled rejection', async () => {
     const port: SearchPort = {
       start: vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED 127.0.0.1:3000")),
@@ -145,6 +175,23 @@ describe("useSearch", () => {
     expect(result.current.state.status).toBe("error");
     expect(result.current.state.errorMessage).toBe("connect ECONNREFUSED 127.0.0.1:3000");
     expect(port.subscribe).not.toHaveBeenCalled();
+  });
+
+  it('start() pasa a status "error" si subscribe() tira una excepción sincrónica (ej. EventSource no soportado) — mismo mecanismo que el fallo del POST inicial, encontrado adaptando el layout: subscribe() no estaba cubierto por el try/catch', async () => {
+    const port: SearchPort = {
+      start: vi.fn().mockResolvedValue({ searchId: "search-1" }),
+      subscribe: vi.fn(() => {
+        throw new Error("EventSource is not defined");
+      }),
+    };
+    const { result } = renderHook(() => useSearch(port));
+
+    await act(async () => {
+      await result.current.start({ jobTitle: "Backend Engineer", remoteOnly: true, targetCompanies: 50 });
+    });
+
+    expect(result.current.state.status).toBe("error");
+    expect(result.current.state.errorMessage).toBe("EventSource is not defined");
   });
 
   it("desuscribe la sesión anterior si se llama a start() de nuevo", async () => {

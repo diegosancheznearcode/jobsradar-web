@@ -90,7 +90,7 @@ export function SearchForm({
       {/* Puesto + Ubicación en fila, no apiladas — pedido explícito del usuario. */}
       <div className="flex flex-col gap-3 sm:flex-row">
         <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="jobTitle" className="text-sm text-slate-300">
+          <label htmlFor="jobTitle" className="text-sm text-muted">
             Puesto
           </label>
           <input
@@ -100,12 +100,12 @@ export function SearchForm({
             onChange={(e) => onJobTitleChange(e.target.value)}
             placeholder="Backend Engineer"
             disabled={disabled}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500 disabled:opacity-50"
+            className="rounded-control border border-border bg-panel px-3 py-2 text-sm text-text placeholder:text-muted disabled:opacity-50"
           />
         </div>
 
         <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="locationFilter" className="text-sm text-slate-300">
+          <label htmlFor="locationFilter" className="text-sm text-muted">
             Ubicación del rol (filtra los resultados, opcional)
           </label>
           <input
@@ -114,13 +114,13 @@ export function SearchForm({
             value={locationFilter}
             onChange={(e) => onLocationFilterChange(e.target.value)}
             placeholder="San Mateo"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 placeholder:text-slate-500"
+            className="rounded-control border border-border bg-panel px-3 py-2 text-sm text-text placeholder:text-muted"
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="targetCompanies" className="text-sm text-slate-300">
+        <label htmlFor="targetCompanies" className="text-sm text-muted">
           Cantidad de empresas a encontrar (1-50)
         </label>
         <input
@@ -149,12 +149,12 @@ export function SearchForm({
           // campo numérico ya lleno.
           onFocus={(e) => e.target.select()}
           disabled={disabled}
-          className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 disabled:opacity-50"
+          className="rounded-control border border-border bg-panel px-3 py-2 text-sm text-text disabled:opacity-50"
         />
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-400">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
@@ -162,7 +162,7 @@ export function SearchForm({
       <button
         type="submit"
         disabled={disabled}
-        className="rounded bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-control bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
       >
         {disabled ? "Buscando…" : "Buscar"}
       </button>
