@@ -1,0 +1,117 @@
+# Build and deploy jobsradar-web to Cloud Run.
+#
+# A reviewable copy lives at ci/jobsradar-web.cloudbuild.yaml in
+# nearcodecr/nearcode-infra. Keep them in sync; the trigger reads THIS one.
+#
+# @diegosancheznearcode/contracts is a private GitHub Package (see .npmrc),
+# published from jobsradar-api. Reading it needs a read:packages token, held
+# as the JRW_GH_PACKAGES_TOKEN secret. It reaches this build as the
+# NODE_AUTH_TOKEN build-step env var (availableSecrets, below), then gets
+# appended as an auth line to .npmrc before each pnpm install — the same
+# thing actions/setup-node does automatically in GitHub Actions, done by hand
+# here since Cloud Build has no equivalent helper. Inside the Docker build
+# itself the token instead goes through a BuildKit --secret mount (see
+# Dockerfile): a --build-arg would bake it into the image's layer history.
+#
+# vite inlines env vars into the bundle at build time; there is no runtime
+# configuration in a static build. _API_URL comes from the trigger, which
+# Terraform wires to jobsradar-api's own run.app URL (cicd.tf), so it can
+# never drift from what is deployed.
+#
+# Substitutions come from the trigger: _AR_HOSTNAME, _AR_PROJECT_ID,
+# _AR_REPOSITORY, _DEPLOY_REGION, _SERVICE_NAME, _API_URL.
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/JRW_GH_PACKAGES_TOKEN/versions/latest
+      env: 'NODE_AUTH_TOKEN'
+
+steps:
+  - id: Install
+    name: node:22-alpine
+    entrypoint: sh
+    secretEnv: ['NODE_AUTH_TOKEN']
+    args:
+      - -c
+      - |
+        corepack enable
+        echo "//npm.pkg.github.com/:_authToken=$$NODE_AUTH_TOKEN" >> .npmrc
+        pnpm install --frozen-lockfile
+
+  - id: Typecheck
+    name: node:22-alpine
+    entrypoint: sh
+    args: ['-c', 'corepack enable && pnpm typecheck']
+
+  - id: Lint
+    name: node:22-alpine
+    entrypoint: sh
+    args: ['-c', 'corepack enable && pnpm lint']
+
+  - id: Test
+    name: node:22-alpine
+    entrypoint: sh
+    args: ['-c', 'corepack enable && pnpm test']
+
+  # Best effort. The first build after this lands has nothing to pull, and a
+  # miss must not fail the pipeline.
+  - id: Pull cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - docker pull $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:latest || exit 0
+
+  - id: Build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    secretEnv: ['NODE_AUTH_TOKEN']
+    args:
+      - -c
+      - |
+        DOCKER_BUILDKIT=1 docker build \
+          --secret id=npm_token,env=NODE_AUTH_TOKEN \
+          --cache-from=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:latest \
+          --build-arg VITE_API_URL=$_API_URL \
+          -t $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:$COMMIT_SHA \
+          -t $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:latest \
+          -f Dockerfile .
+
+  # Explicit, because the `images:` field pushes only after every step has
+  # finished -- too late for a Deploy step that needs the image to exist.
+  - id: Push
+    name: gcr.io/cloud-builders/docker
+    args: ['push', '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:$COMMIT_SHA']
+
+  - id: Push latest
+    name: gcr.io/cloud-builders/docker
+    args: ['push', '$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:latest']
+
+  - id: Deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    # Deploys the immutable :$COMMIT_SHA tag, never :latest. Terraform ignores
+    # the image field on this service precisely because this step owns it.
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - --platform=managed
+      - --image=$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$_SERVICE_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID
+      - --region=$_DEPLOY_REGION
+      - --quiet
+
+timeout: 900s
+
+options:
+  # Required: the build runs as a user-specified service account, which has no
+  # default logs bucket.
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: ALLOW_LOOSE
+
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - jobsradar-web
