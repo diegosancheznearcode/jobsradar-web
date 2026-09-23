@@ -18,9 +18,9 @@ jobs:
           node-version: 22
           cache: pnpm
           registry-url: https://npm.pkg.github.com
-          scope: "@diegosancheznearcode"
+          scope: "@nearcodecr"
 
-      # @diegosancheznearcode/contracts se publica desde jobsradar-api a
+      # @nearcodecr/jobsradar-contracts se publica desde jobsradar-api a
       # GitHub Packages (ver ARCHITECTURE.md sección 9 y README). Como
       # jobsradar-api es privado, leer su paquete requiere un token con
       # scopes read:packages + repo. JOBSRADAR_API_RO_TOKEN (el mismo secret

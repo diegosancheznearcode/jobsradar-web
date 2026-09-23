@@ -20,7 +20,7 @@ pnpm dev
 Requiere que `jobsradar-api` esté corriendo en `VITE_API_URL`
 (por defecto `http://localhost:3000`).
 
-## `@diegosancheznearcode/contracts`
+## `@nearcodecr/jobsradar-contracts`
 
 Se instala como una dependencia normal (`^0.1.0`) desde GitHub Packages —
 `jobsradar-api` la publica ahí en cada push a `main` (ver su
@@ -30,7 +30,7 @@ el desarrollo local como el CI necesitan autenticarse contra
 scope:
 
 ```
-@diegosancheznearcode:registry=https://npm.pkg.github.com
+@nearcodecr:registry=https://npm.pkg.github.com
 ```
 
 pero **no** el token — pnpm rechaza expandir variables de entorno en
@@ -68,7 +68,7 @@ en la Fase 7 — ver la sección 12 de `docs/ARCHITECTURE.md`.
 
 ```
 src/
-├── domain/          tipos de UI derivados de @diegosancheznearcode/contracts, sin React
+├── domain/          tipos de UI derivados de @nearcodecr/jobsradar-contracts, sin React
 ├── application/      casos de uso (useSearch) + puertos (SearchPort, ExportPort)
 ├── infrastructure/   adaptadores: HttpSearchAdapter, SseAdapter, CsvExportAdapter
 └── ui/               componentes, páginas (App.tsx) — consume application/ vía puertos
