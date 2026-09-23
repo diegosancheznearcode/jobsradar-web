@@ -3,7 +3,7 @@
 # A reviewable copy lives at ci/jobsradar-web.cloudbuild.yaml in
 # nearcodecr/nearcode-infra. Keep them in sync; the trigger reads THIS one.
 #
-# @diegosancheznearcode/contracts is a private GitHub Package (see .npmrc),
+# @nearcodecr/jobsradar-contracts is a private GitHub Package (see .npmrc),
 # published from jobsradar-api. Reading it needs a read:packages token, held
 # as the JRW_GH_PACKAGES_TOKEN secret. It reaches this build as the
 # NODE_AUTH_TOKEN build-step env var (availableSecrets, below), then gets

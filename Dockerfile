@@ -5,7 +5,7 @@
 #   build   : installs and compiles the vite bundle
 #   runtime : nginx serving only the static output — this is what Cloud Run runs
 #
-# @diegosancheznearcode/contracts is a private GitHub Package (see .npmrc), so
+# @nearcodecr/jobsradar-contracts is a private GitHub Package (see .npmrc), so
 # `pnpm install` needs a read:packages token. It is passed as a BuildKit
 # secret mount, not a --build-arg: a build-arg gets baked into the image's
 # layer history and would leak the token to anyone who can pull the image.
